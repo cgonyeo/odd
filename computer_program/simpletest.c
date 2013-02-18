@@ -29,10 +29,10 @@ void write_odd(FILE* fp, unsigned char *leds) {
 void write_console(unsigned char *leds) {
 	printf("\n");
 	for(int i=0; i<NUM_LEDS; i++) {
-	//	system("clear");
 		printf("%d, ", leds[i]);
 		fflush(NULL);
 	}
+//	system("clear");
 }
 
 double remainder(double dividend, int divisor) {
@@ -64,28 +64,37 @@ void resetLeds()
 
 //Simple animation
 void cylonEye(double speed, double radius, double totalTime) {
-	totalTime *= speed;
-	double eyeLoc = 0.0;
+	//scale the time by our speed to alter the rate of tf the animation
+	double time = totalTime * speed;
+	//double to keep track of the location of the center
+	double center = 0.0;
+	//we want the center to go between 0 and NUM_LEDS - 1, due to 0 based indexing of leds.
+	int numLeds = NUM_LEDS - 1;
+	//clear the tempLeds array so we can use it
 	for(int i = 0; i < NUM_LEDS; i++)
 		tempLeds[i] = 0;
-	if(((int)totalTime / NUM_LEDS) % 2 == 1)
-		eyeLoc = remainder(totalTime, NUM_LEDS);
-	else
-		eyeLoc = NUM_LEDS - 1 - remainder(totalTime, NUM_LEDS);
 	
+	//Calculate the center
+	if(((int)time / numLeds) % 2 == 1)
+		center = remainder(time, numLeds);
+	else
+		center = numLeds - remainder(time, numLeds);
+	
+	//Calculate the distance of each LED from the center, and do some math to figure out each LED's brightness
 	double ledDistances[NUM_LEDS];
 	for(int i = 0; i < NUM_LEDS; i++)
 	{
-		if(eyeLoc - i > 0)
-			ledDistances[i] = eyeLoc - i;
+		if(center - i > 0)
+			ledDistances[i] = center - i;
 		else
-			ledDistances[i] = i - eyeLoc;
-		ledDistances[i] -= NUM_LEDS;
+			ledDistances[i] = i - center;
+		ledDistances[i] -= numLeds;
 		ledDistances[i] *= -1;
-		ledDistances[i] -= NUM_LEDS - radius;
+		ledDistances[i] -= numLeds - radius;
 		ledDistances[i] *= 1 / radius;
 		ledDistances[i] *= 254;
 	}
+	//If an LED has a positive brightness, set it.
 	for(int i = 0; i < NUM_LEDS; i++)
 	{
 		if(ledDistances[i] > 0)
@@ -120,7 +129,7 @@ int main ( void )
 		gettimeofday(&current, NULL);
 		elapsedTime =  formatTime(current.tv_sec, current.tv_usec) - formatTime(previous.tv_sec, previous.tv_usec);
 		totalTime = formatTime(current.tv_sec, current.tv_usec) - formatTime(start.tv_sec, start.tv_usec);
-		cylonEye(10, 2, totalTime);
+		cylonEye(0.5, 0.5, totalTime);
 		addLeds();
 		if(failed==0)
 			write_odd(fp, leds);
