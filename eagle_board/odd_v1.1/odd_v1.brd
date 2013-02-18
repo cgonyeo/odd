@@ -60,6 +60,8 @@
 <wire x1="100" y1="0" x2="100" y2="40.63" width="0" layer="20"/>
 <wire x1="100" y1="40.63" x2="0" y2="40.63" width="0" layer="20"/>
 <wire x1="0" y1="40.63" x2="0" y2="0" width="0" layer="20"/>
+<text x="74.93" y="33.02" size="1.778" layer="25">odd_v1.1</text>
+<text x="71.12" y="30.48" size="1.778" layer="25">Derek Gonyeo</text>
 </plain>
 <libraries>
 <library name="tcl5940">
