@@ -4,7 +4,7 @@
 #include <unistd.h>
 #include <sys/time.h>
 
-#define NUM_LEDS 16
+#define NUM_LEDS 32
 
 //typedef struct odd_led_t {
 //	unsigned char R;
@@ -63,7 +63,7 @@ void resetLeds()
 }
 
 //Simple animation
-void cylonEye(double speed, double radius, double totalTime) {
+void cylonEye(double speed, double radius, double strength, double totalTime) {
 	//scale the time by our speed to alter the rate of tf the animation
 	double time = totalTime * speed;
 	//double to keep track of the location of the center
@@ -92,13 +92,16 @@ void cylonEye(double speed, double radius, double totalTime) {
 		ledDistances[i] *= -1;
 		ledDistances[i] -= numLeds - radius;
 		ledDistances[i] *= 1 / radius;
-		ledDistances[i] *= 254;
+		ledDistances[i] *= 254 * strength;
+		if(ledDistances[i] > 254)
+			ledDistances[i] = 254;
+		sleep(0.1);
 	}
 	//If an LED has a positive brightness, set it.
 	for(int i = 0; i < NUM_LEDS; i++)
 	{
 		if(ledDistances[i] > 0)
-			tempLeds[i] = (char)ledDistances[i];
+			tempLeds[i] = (unsigned char)ledDistances[i];
 	}
 }
 
@@ -129,8 +132,10 @@ int main ( void )
 		gettimeofday(&current, NULL);
 		elapsedTime =  formatTime(current.tv_sec, current.tv_usec) - formatTime(previous.tv_sec, previous.tv_usec);
 		totalTime = formatTime(current.tv_sec, current.tv_usec) - formatTime(start.tv_sec, start.tv_usec);
-		cylonEye(0.5, 0.5, totalTime);
+		cylonEye(30, 6, 0.5, totalTime);
 		addLeds();
+	//	cylonEye(3, 4, 0.5, totalTime);
+	//	addLeds();
 		if(failed==0)
 			write_odd(fp, leds);
 		else
