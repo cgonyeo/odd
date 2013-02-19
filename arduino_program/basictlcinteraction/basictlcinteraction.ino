@@ -6,7 +6,6 @@ void setup()
 {
   Serial.begin(57600);
   Tlc.init();
-  delay(10);
   Tlc.setAll(4000);
   delay(10);
   Tlc.update();
@@ -34,8 +33,9 @@ void writeLed(int strength)
 {
   if(counter == 16)
     counter++;
-  Tlc.set(counter, strength * 16);
+  //I have no clue why this needs to be counter - 2
+  Tlc.set(counter - 2, strength * 16);
   counter++;
-  if(counter > 30)
+  if(counter > 32)
     counter = 0;
 }

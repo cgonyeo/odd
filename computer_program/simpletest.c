@@ -244,7 +244,7 @@ int main ( void )
 {
 
 	pthread_t ul;
-	pthread_create(&ul,NULL,updateLoop,"fuckshitass");
+	pthread_create(&ul,NULL,updateLoop,"randomargs");
 	//Some setup...
 	sleep(300000);
 	done = 1;
