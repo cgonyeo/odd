@@ -53,7 +53,6 @@ void write_console(unsigned char *leds) {
 //	system("clear");
 }
 
-
 double remainder(double dividend, int divisor) {
 	int quotient = (int) dividend / divisor;
 	return dividend - divisor * quotient;
@@ -149,7 +148,6 @@ void strobe(double speed, double strength, double radius)
 	{
 		tempLeds[i] = (unsigned char)power;
 	}
-	printf("Strobe: %e\n",power);
 }
 
 void setAll(double speed, double strength, double radius)
@@ -163,8 +161,21 @@ void setAll(double speed, double strength, double radius)
 		tempLeds[i] = (unsigned char)power;
 }
 
+void addAnimation( void (*function)(double, double, double), double speed, double strength, double radius, void (*modifier)( void ))
+{
+	printf("Adding animation...\n");
+	animation_t* derp = malloc(sizeof(animation_t));
+	derp->function = function;
+	derp->speed = speed;
+	derp->strength = strength;
+	derp->radius = radius;
+	derp->modifier = modifier;
+	animations[numAnimations++] = derp;
+	printf("Animation added.\n");
+}
+
 void *updateLoop(void *arg) {
-	printf("Thread started.\n");
+	//printf("Thread started.\n");
 	(void)arg;
 	//Open the stream, record if it fails
 	int fd = open(DEV, O_WRONLY);
@@ -180,8 +191,8 @@ void *updateLoop(void *arg) {
 		printf("Failed!\n");
 		exit(EXIT_FAILURE);
 	}
-	puts("SAVED");
-
+	//puts("SAVED");
+	
 	elapsedTime = 0;
 	totalTime = 0;
 	struct timeval start, current, previous;
@@ -189,22 +200,6 @@ void *updateLoop(void *arg) {
 	gettimeofday(&previous, NULL);
 	for(int i = 0; i < NUM_LEDS; i++)
 		leds[i] = 0;
-
-	animation_t* derp = malloc(sizeof(animation_t));
-	derp->function = cylonEye;
-	derp->speed = 10;
-	derp->strength = 0.5;
-	derp->radius = 15;
-	derp->modifier = addLeds;
-	animations[numAnimations++] = derp;
-	
-	animation_t* herp = malloc(sizeof(animation_t));
-	herp->function = cylonEye;
-	herp->speed = 13;
-	herp->strength = 0.5;
-	herp->radius = 15;
-	herp->modifier = addLeds;
-	animations[numAnimations++] = herp;
 
 	while(!done)
 	{
@@ -220,15 +215,6 @@ void *updateLoop(void *arg) {
 			animations[i]->modifier();
 		}
 				
-//		cylonEye(30, 2, 0.5);
-//		addLeds();
-//		cylonEye(13, 5, 0.5);
-//		addLeds();
-//		strobe(40, 0.5, totalTime);
-//		addLeds();
-		
-		
-		
 		if(failed==0)
 			write_odd(fp, leds);
 	//	else
@@ -240,13 +226,91 @@ void *updateLoop(void *arg) {
 	return NULL;
 }
 
+void removeAnimation(int index)
+{
+	if(index > numAnimations || index < 0)
+		return;
+	for(int i = index; i < numAnimations - 1; i++)
+		animations[i] = animations[i+1];
+	animations[numAnimations - 1] = NULL;
+	numAnimations--;
+}
+
+void flushInput()
+{
+	char c = 'f';
+	while((c = getchar()) != '\n' && c != EOF);
+
+}
+
 int main ( void )
 {
-
+	//Start the thread that updates our LEDs
 	pthread_t ul;
 	pthread_create(&ul,NULL,updateLoop,"randomargs");
-	//Some setup...
-	sleep(300000);
+	
+	printf("ODD started.\n");
+	
+	char input[20];
+	while(!done)
+	{
+		printf("command > ");
+		scanf("%s", &input);
+		if(!strcmp(input,"cylonEye") || !strcmp(input,"strobe") || !strcmp(input,"setAll"))
+		{
+			double speed = -1, strength = -1, radius = -1;
+			char modifier[20];
+			modifier[0] = '\0';
+			while(speed < 0) {
+				printf("speed > ");
+				scanf("%lf",&speed);
+				flushInput();
+			}
+			while(strength < 0) {
+				printf("strength > ");
+				scanf("%lf",&strength);
+				flushInput();
+			}
+			while(radius < 0) {
+				printf("radius > ");
+				scanf("%lf",&radius);
+				flushInput();
+			}
+			while(strcmp(modifier,"add") && strcmp(modifier,"subtract")) {
+				printf("modifier > ");
+				scanf("%s", &modifier);
+				flushInput();
+			}
+			void(*animation_function)(double, double, double);
+			void(*animation_modifier)( void ) = addLeds;
+			if(!strcmp(input,"cylonEye"))
+				animation_function = cylonEye;
+			if(!strcmp(input,"strobe"))
+				animation_function = strobe;
+			if(!strcmp(input,"setAll"))
+				animation_function = setAll;
+			if(!strcmp(modifier,"add"))
+				animation_modifier = addLeds;
+			if(!strcmp(modifier,"subtract"))
+				animation_modifier = subtractLeds;
+			
+			addAnimation(animation_function,speed,strength,radius,animation_modifier); 
+		}
+		
+		if(!strcmp(input,"exit"))
+			done = 1;
+		if(!strcmp(input,"remove"))
+		{
+			flushInput();
+			int index = -1;
+			printf("index >");
+			scanf("%d", &index);
+			removeAnimation(index);
+			
+		}
+		flushInput();
+	}
+	printf("Exiting...\n");
 	done = 1;
 	pthread_join(ul, NULL);
 	for(int i = 0; i < numAnimations; i++)
