@@ -31,8 +31,6 @@ void loop()
 
 void writeLed(int strength)
 {
-  if(counter == 16)
-    counter++;
   //I have no clue why this needs to be counter - 2
   Tlc.set(counter - 2, strength * 16);
   counter++;
