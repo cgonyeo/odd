@@ -105,6 +105,18 @@ void cylonEye(double speed, double radius, double strength, double totalTime) {
 	}
 }
 
+void strobe(double speed, double strength, double totalTime)
+{
+	double time = totalTime * speed;
+	double power = 0;
+	if((int)time % 2 == 1)
+		power = 254 * strength;
+	for(int i = 0; i < NUM_LEDS; i++)
+	{
+		tempLeds[i] = (unsigned char)power;
+	}
+}
+
 int main ( void )
 {
 	//Open the stream, record if it fails
@@ -132,10 +144,12 @@ int main ( void )
 		gettimeofday(&current, NULL);
 		elapsedTime =  formatTime(current.tv_sec, current.tv_usec) - formatTime(previous.tv_sec, previous.tv_usec);
 		totalTime = formatTime(current.tv_sec, current.tv_usec) - formatTime(start.tv_sec, start.tv_usec);
-		cylonEye(30, 6, 0.5, totalTime);
+		cylonEye(30, 2, 0.5, totalTime);
 		addLeds();
-	//	cylonEye(3, 4, 0.5, totalTime);
-	//	addLeds();
+		cylonEye(13, 5, 0.5, totalTime);
+		addLeds();
+//		strobe(40, 0.5, totalTime);
+//		addLeds();
 		if(failed==0)
 			write_odd(fp, leds);
 		else
