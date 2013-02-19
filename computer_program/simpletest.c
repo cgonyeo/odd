@@ -3,25 +3,43 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/time.h>
+#include <pthread.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 #define NUM_LEDS 32
-
+//#define DEV "/dev/ttyUSB0"
+#define DEV "/dev/ttyUSB0"
 //typedef struct odd_led_t {
 //	unsigned char R;
 //	unsigned char G;
 //	unsigned char B;
 //};
 
+typedef struct {
+	void (*function)(double, double, double);
+	void (*modifier)( void );
+	double speed;
+	double strength;
+	double radius;
+} animation_t;
+
+double totalTime, elapsedTime;
+int done = 0;
+int numAnimations = 0;
+
 unsigned char leds[NUM_LEDS];
 unsigned char tempLeds[NUM_LEDS];
+animation_t* animations[5];
 
 //Writes the led array *leds to the file stream fp.
 void write_odd(FILE* fp, unsigned char *leds) {
+	unsigned char end = 255;
 	for(int i=0; i<NUM_LEDS; i++) {
-		fwrite(&leds[i], 1, 1, fp);
+		fwrite(&(leds[i]), 1, 1, fp);
 		fflush(fp);
 	}
-	unsigned char end = 255;
 	fwrite(&end, 1, 1, fp);
 }
 
@@ -34,6 +52,7 @@ void write_console(unsigned char *leds) {
 	}
 //	system("clear");
 }
+
 
 double remainder(double dividend, int divisor) {
 	int quotient = (int) dividend / divisor;
@@ -56,6 +75,17 @@ void addLeds()
 	}
 }
 
+void subtractLeds()
+{
+	for(int i = 0; i < NUM_LEDS; i++)
+	{
+		if(leds[i] - tempLeds[i] < 0)
+			leds[i] = 0;
+		else
+			leds[i] -= tempLeds[i];
+	}
+}
+
 void resetLeds()
 {
 	for(int i = 0; i < NUM_LEDS; i++)
@@ -63,7 +93,9 @@ void resetLeds()
 }
 
 //Simple animation
-void cylonEye(double speed, double radius, double strength, double totalTime) {
+void cylonEye(double speed, double strength, double radius) {
+	if(strength < 0 || strength > 1)
+		return;
 	//scale the time by our speed to alter the rate of tf the animation
 	double time = totalTime * speed;
 	//double to keep track of the location of the center
@@ -95,7 +127,6 @@ void cylonEye(double speed, double radius, double strength, double totalTime) {
 		ledDistances[i] *= 254 * strength;
 		if(ledDistances[i] > 254)
 			ledDistances[i] = 254;
-		sleep(0.1);
 	}
 	//If an LED has a positive brightness, set it.
 	for(int i = 0; i < NUM_LEDS; i++)
@@ -105,8 +136,11 @@ void cylonEye(double speed, double radius, double strength, double totalTime) {
 	}
 }
 
-void strobe(double speed, double strength, double totalTime)
+void strobe(double speed, double strength, double radius)
 {
+	(void)radius;
+	if(strength < 0 || strength > 1)
+		return;
 	double time = totalTime * speed;
 	double power = 0;
 	if((int)time % 2 == 1)
@@ -115,49 +149,107 @@ void strobe(double speed, double strength, double totalTime)
 	{
 		tempLeds[i] = (unsigned char)power;
 	}
+	printf("Strobe: %e\n",power);
 }
 
-int main ( void )
+void setAll(double speed, double strength, double radius)
 {
+	(void)radius;
+	(void)speed;
+	if(strength < 0 || strength > 1)
+		return;
+	double power = 254 * strength;
+	for(int i = 0; i < NUM_LEDS; i++)
+		tempLeds[i] = (unsigned char)power;
+}
+
+void *updateLoop(void *arg) {
+	printf("Thread started.\n");
+	(void)arg;
 	//Open the stream, record if it fails
+	int fd = open(DEV, O_WRONLY);
+	if( fd == -1 ) {
+		perror("open");
+		exit(EXIT_FAILURE);
+	}
+	FILE *fp = fdopen(fd, "w");
 	int failed = 0;
-	FILE *fp = fopen( "/dev/ttyUSB0" , "w" );
 	if( fp == NULL )
 	{
 		failed = 1;
-		printf("Failed!");
+		printf("Failed!\n");
+		exit(EXIT_FAILURE);
 	}
-	
-	//Some setup...
-	double elapsedTime, totalTime = 0;
+	puts("SAVED");
+
+	elapsedTime = 0;
+	totalTime = 0;
 	struct timeval start, current, previous;
 	gettimeofday(&start, NULL);
 	gettimeofday(&previous, NULL);
 	for(int i = 0; i < NUM_LEDS; i++)
 		leds[i] = 0;
+
+	animation_t* derp = malloc(sizeof(animation_t));
+	derp->function = cylonEye;
+	derp->speed = 10;
+	derp->strength = 0.5;
+	derp->radius = 15;
+	derp->modifier = addLeds;
+	animations[numAnimations++] = derp;
 	
-	//Run this block in a while loop eventually
-	while(1)
+	animation_t* herp = malloc(sizeof(animation_t));
+	herp->function = cylonEye;
+	herp->speed = 13;
+	herp->strength = 0.5;
+	herp->radius = 15;
+	herp->modifier = addLeds;
+	animations[numAnimations++] = herp;
+
+	while(!done)
 	{
 		resetLeds();
 		previous = current;
 		gettimeofday(&current, NULL);
 		elapsedTime =  formatTime(current.tv_sec, current.tv_usec) - formatTime(previous.tv_sec, previous.tv_usec);
 		totalTime = formatTime(current.tv_sec, current.tv_usec) - formatTime(start.tv_sec, start.tv_usec);
-		cylonEye(30, 2, 0.5, totalTime);
-		addLeds();
-		cylonEye(13, 5, 0.5, totalTime);
-		addLeds();
+
+		for(int i = 0; i < numAnimations; i++)
+		{
+			animations[i]->function(animations[i]->speed, animations[i]->strength, animations[i]->radius);
+			animations[i]->modifier();
+		}
+				
+//		cylonEye(30, 2, 0.5);
+//		addLeds();
+//		cylonEye(13, 5, 0.5);
+//		addLeds();
 //		strobe(40, 0.5, totalTime);
 //		addLeds();
+		
+		
+		
 		if(failed==0)
 			write_odd(fp, leds);
-		else
-			write_console(leds);
+	//	else
+	//		write_console(leds);
 	}
-	
 	//and we're done, close the stream.
 	if(failed==0)
 		fclose(fp);
+	return NULL;
+}
+
+int main ( void )
+{
+
+	pthread_t ul;
+	pthread_create(&ul,NULL,updateLoop,"fuckshitass");
+	//Some setup...
+	sleep(300000);
+	done = 1;
+	pthread_join(ul, NULL);
+	for(int i = 0; i < numAnimations; i++)
+		free(animations[numAnimations]);
 }
 
