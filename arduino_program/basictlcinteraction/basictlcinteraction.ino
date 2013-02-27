@@ -17,7 +17,7 @@ void loop()
   if(Serial.available())
   {
     int input = Serial.read();
-    //Serial.write(input);
+     Serial.write(input);
     
     if(input == 255)
     {
@@ -33,7 +33,8 @@ void writeLed(int strength)
 {
   //I have no clue why this needs to be counter - 2
   Tlc.set(counter - 2, strength * 16);
+//  Tlc.update();
   counter++;
-  if(counter > 32)
+  if(counter > 32 + 2)
     counter = 0;
 }

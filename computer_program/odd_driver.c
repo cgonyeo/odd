@@ -9,13 +9,17 @@
 #include <fcntl.h>
 
 #define NUM_LEDS 32
-//#define DEV "/dev/ttyUSB0"
 #define DEV "/dev/ttyUSB0"
-//typedef struct odd_led_t {
-//	unsigned char R;
-//	unsigned char G;
-//	unsigned char B;
-//};
+
+double totalTime, elapsedTime;
+int done = 0;
+int numAnimations = 0;
+
+typedef struct {
+	unsigned char R;
+	unsigned char G;
+	unsigned char B;
+} odd_led_t;
 
 typedef struct {
 	void (*function)(double, double, double);
@@ -25,16 +29,12 @@ typedef struct {
 	double radius;
 } animation_t;
 
-double totalTime, elapsedTime;
-int done = 0;
-int numAnimations = 0;
-
 unsigned char leds[NUM_LEDS];
 unsigned char tempLeds[NUM_LEDS];
-animation_t* animations[5];
+animation_t* animations[50];
 
 //Writes the led array *leds to the file stream fp.
-void write_odd(FILE* fp, unsigned char *leds) {
+void write_odd(FILE* fp) {
 	unsigned char end = 255;
 	for(int i=0; i<NUM_LEDS; i++) {
 		fwrite(&(leds[i]), 1, 1, fp);
@@ -56,6 +56,14 @@ void write_console(unsigned char *leds) {
 double remainder(double dividend, int divisor) {
 	int quotient = (int) dividend / divisor;
 	return dividend - divisor * quotient;
+}
+
+double pow(double x, double y)
+{
+	if(y > 0)
+		return pow(x, y - 1) * x;
+	else
+		return 1.0;
 }
 
 double formatTime(long int seconds, long int useconds)
@@ -161,6 +169,26 @@ void setAll(double speed, double strength, double radius)
 		tempLeds[i] = (unsigned char)power;
 }
 
+void smoothStrobe(double speed, double strength, double radius)
+{
+	(void)radius;
+	double time = totalTime * speed;
+	double power = 0;
+	if((int)time % 2 == 1)
+		power = remainder(time, 1);
+	else
+		power = 1 - remainder(time, 1);
+	power = pow(power, 2);
+	power *= 1.5;
+	power -= 0.5;
+	if(power < 0)
+		power = 0;
+	if(strength >= 0 && strength <= 1)
+		power *= 254 * strength;
+	for(int i = 0; i < NUM_LEDS; i++)
+		tempLeds[i] = (unsigned char)power;
+}
+
 void addAnimation( void (*function)(double, double, double), double speed, double strength, double radius, void (*modifier)( void ))
 {
 	animation_t* derp = malloc(sizeof(animation_t));
@@ -211,10 +239,12 @@ void *updateLoop(void *arg) {
 		}
 				
 		if(failed==0)
-			write_odd(fp, leds);
-	//	else
-	//		write_console(leds);
+			write_odd(fp);
+		else
+			write_console(leds);
 	}
+	resetLeds();
+	write_odd(fp);
 	//and we're done, close the stream.
 	if(failed==0)
 		fclose(fp);
@@ -252,7 +282,7 @@ void getUserInput(char *buffer)
 	buffer[char_count] = 0x00;
 }
 
-int main ( void )
+int main(void)
 {
 	//Start the thread that updates our LEDs
 	pthread_t ul;
@@ -266,7 +296,7 @@ int main ( void )
 		printf("command > ");
 		//scanf("%s", &input);
 		getUserInput(input);
-		if(!strcmp(input,"cylonEye") || !strcmp(input,"strobe") || !strcmp(input,"setAll"))
+		if(!strcmp(input,"cylonEye") || !strcmp(input,"strobe") || !strcmp(input,"setAll") || !strcmp(input, "smoothStrobe"))
 		{
 			double speed = -1, strength = -1, radius = -1;
 			char modifier[20];
@@ -298,6 +328,8 @@ int main ( void )
 				animation_function = strobe;
 			if(!strcmp(input,"setAll"))
 				animation_function = setAll;
+			if(!strcmp(input,"smoothStrobe"))
+				animation_function = smoothStrobe;
 			if(!strcmp(modifier,"add"))
 				animation_modifier = addLeds;
 			if(!strcmp(modifier,"subtract"))
