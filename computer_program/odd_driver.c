@@ -8,6 +8,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
+#define PI 3.141592653
 #define NUM_LEDS 32
 #define DEV "/dev/ttyUSB0"
 
@@ -15,12 +16,14 @@ double totalTime, elapsedTime;
 int done = 0;
 int numAnimations = 0;
 
+//Used to represent a single LED
 typedef struct {
 	unsigned char R;
 	unsigned char G;
 	unsigned char B;
 } odd_led_t;
 
+//Holds the parameters for a single animation
 typedef struct {
 	void (*function)(double, double, double);
 	void (*modifier)( void );
@@ -29,11 +32,11 @@ typedef struct {
 	double radius;
 } animation_t;
 
-unsigned char leds[NUM_LEDS];
-unsigned char tempLeds[NUM_LEDS];
-animation_t* animations[50];
+unsigned char leds[NUM_LEDS]; //All the LEDs in use
+unsigned char tempLeds[NUM_LEDS]; //Current alterations to the LEDs, used with animations
+animation_t* animations[50]; //All currently used animations.
 
-//Writes the led array *leds to the file stream fp.
+//Writes leds to the file stream fp.
 void write_odd(FILE* fp) {
 	unsigned char end = 255;
 	for(int i=0; i<NUM_LEDS; i++) {
@@ -44,20 +47,22 @@ void write_odd(FILE* fp) {
 }
 
 //Writes the led array to the console
-void write_console(unsigned char *leds) {
+void write_console() {
 	printf("\n");
 	for(int i=0; i<NUM_LEDS; i++) {
 		printf("%d, ", leds[i]);
 		fflush(NULL);
 	}
-//	system("clear");
 }
 
+//Returns the remainder of dividend / divisor
 double remainder(double dividend, int divisor) {
 	int quotient = (int) dividend / divisor;
 	return dividend - divisor * quotient;
 }
 
+//Returns the value of X raised to Y
+//Y should be an integer. Ignore the fact that it isn't.
 double pow(double x, double y)
 {
 	if(y > 0)
@@ -66,11 +71,28 @@ double pow(double x, double y)
 		return 1.0;
 }
 
-double formatTime(long int seconds, long int useconds)
+//Returns a taylor series approximation for (sin((x - 0.5) * pi) + 1) / 2
+//Put in a number between 0 and 1
+//and it returns a number between 0 and 1
+double sin(double x)
 {
-	return seconds % 10000 + (useconds - useconds % 1000) / 1000000.0;
+	x -= .5;
+	x = PI * x - ( pow(PI, 3) * pow(x, 3) ) / 6 + ( pow(PI, 5) * pow(x, 5) ) / 120;
+	x++;
+	x /= 2;
+	return x;
 }
 
+//Returns the time as a double (formatted to be smaller)
+double formatTime(long int seconds, long int useconds)
+{
+	double time = seconds % 10000 + (useconds - useconds % 1000) / 1000000.0;
+	if(time > 1000)
+		time = remainder(time, 1000);
+	return time;
+}
+
+//Adds the current modifications to the LEDs to the led array
 void addLeds()
 {
 	for(int i = 0; i < NUM_LEDS; i++)
@@ -82,6 +104,7 @@ void addLeds()
 	}
 }
 
+//Subtracts the current modifications to the LEDs from the led array
 void subtractLeds()
 {
 	for(int i = 0; i < NUM_LEDS; i++)
@@ -93,13 +116,15 @@ void subtractLeds()
 	}
 }
 
+//Resets all LEDs to 0
 void resetLeds()
 {
 	for(int i = 0; i < NUM_LEDS; i++)
 		leds[i] = 0;
 }
 
-//Simple animation
+//Animation: Lights up a clump of LEDs and then travels back and forth across the row
+//Follows a basic sin curve (moves faster in the middle, slower at the ends)
 void cylonEye(double speed, double strength, double radius) {
 	if(strength < 0 || strength > 1)
 		return;
@@ -114,10 +139,13 @@ void cylonEye(double speed, double strength, double radius) {
 		tempLeds[i] = 0;
 	
 	//Calculate the center
-	if(((int)time / numLeds) % 2 == 1)
-		center = remainder(time, numLeds);
+	if((int)time % 2 == 1)
+		center = remainder(time, 1);
 	else
-		center = numLeds - remainder(time, numLeds);
+		center = 1 - remainder(time, 1);
+	center = sin(center);
+	center *= numLeds;
+	
 	
 	//Calculate the distance of each LED from the center, and do some math to figure out each LED's brightness
 	double ledDistances[NUM_LEDS];
@@ -143,6 +171,53 @@ void cylonEye(double speed, double strength, double radius) {
 	}
 }
 
+//Animation: same as cylonEye but follows a linear movement (constant speed)
+void cylonEye_Linear(double speed, double strength, double radius) {
+	if(strength < 0 || strength > 1)
+		return;
+	//scale the time by our speed to alter the rate of tf the animation
+	double time = totalTime * speed;
+	//double to keep track of the location of the center
+	double center = 0.0;
+	//we want the center to go between 0 and NUM_LEDS - 1, due to 0 based indexing of leds.
+	int numLeds = NUM_LEDS - 1;
+	//clear the tempLeds array so we can use it
+	for(int i = 0; i < NUM_LEDS; i++)
+		tempLeds[i] = 0;
+	
+	//Calculate the center
+	if((int)time % 2 == 1)
+		center = remainder(time, 1);
+	else
+		center = 1 - remainder(time, 1);
+	center *= numLeds;
+	
+	
+	//Calculate the distance of each LED from the center, and do some math to figure out each LED's brightness
+	double ledDistances[NUM_LEDS];
+	for(int i = 0; i < NUM_LEDS; i++)
+	{
+		if(center - i > 0)
+			ledDistances[i] = center - i;
+		else
+			ledDistances[i] = i - center;
+		ledDistances[i] -= numLeds;
+		ledDistances[i] *= -1;
+		ledDistances[i] -= numLeds - radius;
+		ledDistances[i] *= 1 / radius;
+		ledDistances[i] *= 254 * strength;
+		if(ledDistances[i] > 254)
+			ledDistances[i] = 254;
+	}
+	//If an LED has a positive brightness, set it.
+	for(int i = 0; i < NUM_LEDS; i++)
+	{
+		if(ledDistances[i] > 0)
+			tempLeds[i] = (unsigned char)ledDistances[i];
+	}
+}
+
+//Animation: Turns the LEDs off and on and off and on and off and on and off...
 void strobe(double speed, double strength, double radius)
 {
 	(void)radius;
@@ -158,6 +233,7 @@ void strobe(double speed, double strength, double radius)
 	}
 }
 
+//Animation: Sets all LEDs to strength
 void setAll(double speed, double strength, double radius)
 {
 	(void)radius;
@@ -169,6 +245,7 @@ void setAll(double speed, double strength, double radius)
 		tempLeds[i] = (unsigned char)power;
 }
 
+//Animation: Like strobe but fades LEDs in and out and pauses when they're off.
 void smoothStrobe(double speed, double strength, double radius)
 {
 	(void)radius;
@@ -189,6 +266,7 @@ void smoothStrobe(double speed, double strength, double radius)
 		tempLeds[i] = (unsigned char)power;
 }
 
+//Adds an animation
 void addAnimation( void (*function)(double, double, double), double speed, double strength, double radius, void (*modifier)( void ))
 {
 	animation_t* derp = malloc(sizeof(animation_t));
@@ -200,6 +278,7 @@ void addAnimation( void (*function)(double, double, double), double speed, doubl
 	animations[numAnimations++] = derp;
 }
 
+//Program's update loop
 void *updateLoop(void *arg) {
 	//printf("Thread started.\n");
 	(void)arg;
@@ -241,7 +320,7 @@ void *updateLoop(void *arg) {
 		if(failed==0)
 			write_odd(fp);
 		else
-			write_console(leds);
+			write_console();
 	}
 	resetLeds();
 	write_odd(fp);
@@ -251,6 +330,7 @@ void *updateLoop(void *arg) {
 	return NULL;
 }
 
+//Removes an animation
 void removeAnimation(int index)
 {
 	if(index > numAnimations || index < 0)
@@ -296,7 +376,7 @@ int main(void)
 		printf("command > ");
 		//scanf("%s", &input);
 		getUserInput(input);
-		if(!strcmp(input,"cylonEye") || !strcmp(input,"strobe") || !strcmp(input,"setAll") || !strcmp(input, "smoothStrobe"))
+		if(!strcmp(input,"cyloneye") || !strcmp(input, "cyloneye -l") || !strcmp(input,"strobe") || !strcmp(input,"setall") || !strcmp(input, "smoothstrobe"))
 		{
 			double speed = -1, strength = -1, radius = -1;
 			char modifier[20];
@@ -322,13 +402,15 @@ int main(void)
 			}
 			void(*animation_function)(double, double, double);
 			void(*animation_modifier)( void ) = addLeds;
-			if(!strcmp(input,"cylonEye"))
+			if(!strcmp(input,"cyloneye"))
 				animation_function = cylonEye;
+			if(!strcmp(input, "cyloneye -l"))
+				animation_function = cylonEye_Linear;
 			if(!strcmp(input,"strobe"))
 				animation_function = strobe;
-			if(!strcmp(input,"setAll"))
+			if(!strcmp(input,"setall"))
 				animation_function = setAll;
-			if(!strcmp(input,"smoothStrobe"))
+			if(!strcmp(input,"smoothstrobe"))
 				animation_function = smoothStrobe;
 			if(!strcmp(modifier,"add"))
 				animation_modifier = addLeds;
