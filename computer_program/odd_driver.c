@@ -15,6 +15,7 @@
 double totalTime, elapsedTime;
 int done = 0;
 int numAnimations = 0;
+int timeLoops = 0;
 
 //Used to represent a single LED
 typedef struct {
@@ -32,15 +33,15 @@ typedef struct {
 	double radius;
 } animation_t;
 
-unsigned char leds[NUM_LEDS]; //All the LEDs in use
-unsigned char tempLeds[NUM_LEDS]; //Current alterations to the LEDs, used with animations
+odd_led_t* leds[NUM_LEDS]; //All the LEDs in use
+odd_led_t* tempLeds[NUM_LEDS]; //Current alterations to the LEDs, used with animations
 animation_t* animations[50]; //All currently used animations.
 
 //Writes leds to the file stream fp.
 void write_odd(FILE* fp) {
 	unsigned char end = 255;
 	for(int i=0; i<NUM_LEDS; i++) {
-		fwrite(&(leds[i]), 1, 1, fp);
+		fwrite(&((leds[i]->R)), 1, 1, fp);
 		fflush(fp);
 	}
 	fwrite(&end, 1, 1, fp);
@@ -50,7 +51,7 @@ void write_odd(FILE* fp) {
 void write_console() {
 	printf("\n");
 	for(int i=0; i<NUM_LEDS; i++) {
-		printf("%d, ", leds[i]);
+		printf("%d, ", leds[i]->R);
 		fflush(NULL);
 	}
 }
@@ -87,8 +88,10 @@ double sin(double x)
 double formatTime(long int seconds, long int useconds)
 {
 	double time = seconds % 10000 + (useconds - useconds % 1000) / 1000000.0;
-	if(time > 1000)
-		time = remainder(time, 1000);
+	
+	if(time > 100000)
+		time = remainder(time, 100000);
+	
 	return time;
 }
 
@@ -97,10 +100,20 @@ void addLeds()
 {
 	for(int i = 0; i < NUM_LEDS; i++)
 	{
-		if(leds[i] + tempLeds[i] > 254)
-			leds[i] = 254;
+		if(leds[i]->R + tempLeds[i]->R > 254)
+			leds[i]->R = 254;
 		else
-			leds[i] += tempLeds[i];
+			leds[i]->R += tempLeds[i]->R;
+		
+		if(leds[i]->G + tempLeds[i]->G > 254)
+			leds[i]->G = 254;
+		else
+			leds[i]->G += tempLeds[i]->G;
+		
+		if(leds[i]->B + tempLeds[i]->B > 254)
+			leds[i]->B = 254;
+		else
+			leds[i]->B += tempLeds[i]->B;
 	}
 }
 
@@ -109,10 +122,34 @@ void subtractLeds()
 {
 	for(int i = 0; i < NUM_LEDS; i++)
 	{
-		if(leds[i] - tempLeds[i] < 0)
-			leds[i] = 0;
+		if(leds[i]->R - tempLeds[i]->R < 0)
+			leds[i]->R = 0;
 		else
-			leds[i] -= tempLeds[i];
+			leds[i]->R -= tempLeds[i]->R;
+		
+		if(leds[i]->G - tempLeds[i]->G < 0)
+			leds[i]->G = 0;
+		else
+			leds[i]->G -= tempLeds[i]->G;
+		
+		if(leds[i]->B - tempLeds[i]->B < 0)
+			leds[i]->B = 0;
+		else
+			leds[i]->B -= tempLeds[i]->B;
+	}
+}
+
+//Replaces the LEDs in the LED array for every value greater than 0.
+void replaceLeds()
+{
+	for(int i = 0; i < NUM_LEDS; i++)
+	{
+		if(tempLeds[i]->R > 0 || tempLeds[i]->G > 0 || tempLeds[i]->B > 0)
+		{
+			leds[i]->R = tempLeds[i]->R;
+			leds[i]->G = tempLeds[i]->G;
+			leds[i]->B = tempLeds[i]->B;
+		}
 	}
 }
 
@@ -120,7 +157,11 @@ void subtractLeds()
 void resetLeds()
 {
 	for(int i = 0; i < NUM_LEDS; i++)
-		leds[i] = 0;
+	{
+		leds[i]->R = 0;
+		leds[i]->G = 0;
+		leds[i]->B = 0;
+	}
 }
 
 //Animation: Lights up a clump of LEDs and then travels back and forth across the row
@@ -136,7 +177,7 @@ void cylonEye(double speed, double strength, double radius) {
 	int numLeds = NUM_LEDS - 1;
 	//clear the tempLeds array so we can use it
 	for(int i = 0; i < NUM_LEDS; i++)
-		tempLeds[i] = 0;
+		tempLeds[i]->R = 0;
 	
 	//Calculate the center
 	if((int)time % 2 == 1)
@@ -167,7 +208,7 @@ void cylonEye(double speed, double strength, double radius) {
 	for(int i = 0; i < NUM_LEDS; i++)
 	{
 		if(ledDistances[i] > 0)
-			tempLeds[i] = (unsigned char)ledDistances[i];
+			tempLeds[i]->R = (unsigned char)ledDistances[i];
 	}
 }
 
@@ -183,7 +224,7 @@ void cylonEye_Linear(double speed, double strength, double radius) {
 	int numLeds = NUM_LEDS - 1;
 	//clear the tempLeds array so we can use it
 	for(int i = 0; i < NUM_LEDS; i++)
-		tempLeds[i] = 0;
+		tempLeds[i]->R = 0;
 	
 	//Calculate the center
 	if((int)time % 2 == 1)
@@ -213,7 +254,7 @@ void cylonEye_Linear(double speed, double strength, double radius) {
 	for(int i = 0; i < NUM_LEDS; i++)
 	{
 		if(ledDistances[i] > 0)
-			tempLeds[i] = (unsigned char)ledDistances[i];
+			tempLeds[i]->R = (unsigned char)ledDistances[i];
 	}
 }
 
@@ -229,7 +270,7 @@ void strobe(double speed, double strength, double radius)
 		power = 254 * strength;
 	for(int i = 0; i < NUM_LEDS; i++)
 	{
-		tempLeds[i] = (unsigned char)power;
+		tempLeds[i]->R = (unsigned char)power;
 	}
 }
 
@@ -242,7 +283,7 @@ void setAll(double speed, double strength, double radius)
 		return;
 	double power = 254 * strength;
 	for(int i = 0; i < NUM_LEDS; i++)
-		tempLeds[i] = (unsigned char)power;
+		tempLeds[i]->R = (unsigned char)power;
 }
 
 //Animation: Like strobe but fades LEDs in and out and pauses when they're off.
@@ -263,7 +304,7 @@ void smoothStrobe(double speed, double strength, double radius)
 	if(strength >= 0 && strength <= 1)
 		power *= 254 * strength;
 	for(int i = 0; i < NUM_LEDS; i++)
-		tempLeds[i] = (unsigned char)power;
+		tempLeds[i]->R = (unsigned char)power;
 }
 
 //Adds an animation
@@ -276,6 +317,17 @@ void addAnimation( void (*function)(double, double, double), double speed, doubl
 	derp->radius = radius;
 	derp->modifier = modifier;
 	animations[numAnimations++] = derp;
+}
+
+//Removes an animation
+void removeAnimation(int index)
+{
+	if(index > numAnimations || index < 0)
+		return;
+	for(int i = index; i < numAnimations - 1; i++)
+		animations[i] = animations[i+1];
+	animations[numAnimations - 1] = NULL;
+	numAnimations--;
 }
 
 //Program's update loop
@@ -301,7 +353,7 @@ void *updateLoop(void *arg) {
 	gettimeofday(&start, NULL);
 	gettimeofday(&previous, NULL);
 	for(int i = 0; i < NUM_LEDS; i++)
-		leds[i] = 0;
+		leds[i]->R = 0;
 
 	while(!done)
 	{
@@ -328,17 +380,6 @@ void *updateLoop(void *arg) {
 	if(failed==0)
 		fclose(fp);
 	return NULL;
-}
-
-//Removes an animation
-void removeAnimation(int index)
-{
-	if(index > numAnimations || index < 0)
-		return;
-	for(int i = index; i < numAnimations - 1; i++)
-		animations[i] = animations[i+1];
-	animations[numAnimations - 1] = NULL;
-	numAnimations--;
 }
 
 void flushInput()
@@ -370,6 +411,12 @@ int main(void)
 	
 	printf("ODD started.\n");
 	
+	for(int i = 0; i < NUM_LEDS; i++)
+	{
+		leds[i] = malloc(sizeof(odd_led_t));
+		tempLeds[i] = malloc(sizeof(odd_led_t));
+	}
+	
 	char input[80];
 	while(!done)
 	{
@@ -396,7 +443,7 @@ int main(void)
 				scanf("%lf",&radius);
 				flushInput();
 			}
-			while(strcmp(modifier,"add") && strcmp(modifier,"subtract")) {
+			while(strcmp(modifier,"add") && strcmp(modifier,"subtract") && strcmp(modifier, "replace")) {
 				printf("modifier > ");
 				getUserInput(modifier);
 			}
@@ -416,6 +463,8 @@ int main(void)
 				animation_modifier = addLeds;
 			if(!strcmp(modifier,"subtract"))
 				animation_modifier = subtractLeds;
+			if(!strcmp(modifier,"replace"))
+				animation_modifier = replaceLeds;
 			
 			addAnimation(animation_function,speed,strength,radius,animation_modifier); 
 		}
@@ -437,5 +486,10 @@ int main(void)
 	pthread_join(ul, NULL);
 	for(int i = 0; i < numAnimations; i++)
 		free(animations[numAnimations]);
+	for(int i = 0; i < NUM_LEDS; i++)
+	{
+		free(leds[i]);
+		free(tempLeds[i]);
+	}
 }
 
