@@ -95,6 +95,21 @@ double formatTime(long int seconds, long int useconds)
 	return time;
 }
 
+//Inverts all channels on the temp LEDS.
+//For example:
+//254 -> 0
+//0 -> 254
+//180 -> 74
+void invertTempLeds()
+{
+	for(int i = 0; i < NUM_LEDS; i++)
+	{
+		tempLeds[i]->R = 254 - tempLeds[i]->R;
+		tempLeds[i]->G = 254 - tempLeds[i]->G;
+		tempLeds[i]->B = 254 - tempLeds[i]->B;
+	}
+}
+
 //Adds the current modifications to the LEDs to the led array
 void addLeds()
 {
@@ -137,6 +152,14 @@ void subtractLeds()
 		else
 			leds[i]->B -= tempLeds[i]->B;
 	}
+}
+
+//Subtracts the inverse of tempLeds from leds
+void inverseSubtractLeds()
+{
+	invertTempLeds();
+	subtractLeds();
+	invertTempLeds();
 }
 
 //Replaces the LEDs in the LED array for every value greater than 0.
@@ -371,11 +394,12 @@ void *updateLoop(void *arg) {
 				
 		if(failed==0)
 			write_odd(fp);
-		else
-			write_console();
+		//else
+		//	write_console();
 	}
 	resetLeds();
-	write_odd(fp);
+	if(failed==0)
+		write_odd(fp);
 	//and we're done, close the stream.
 	if(failed==0)
 		fclose(fp);
@@ -443,7 +467,7 @@ int main(void)
 				scanf("%lf",&radius);
 				flushInput();
 			}
-			while(strcmp(modifier,"add") && strcmp(modifier,"subtract") && strcmp(modifier, "replace")) {
+			while(strcmp(modifier,"add") && strcmp(modifier,"subtract") && strcmp(modifier,"replace") && strcmp(modifier,"inversesubtract")) {
 				printf("modifier > ");
 				getUserInput(modifier);
 			}
@@ -464,6 +488,8 @@ int main(void)
 			if(!strcmp(modifier,"subtract"))
 				animation_modifier = subtractLeds;
 			if(!strcmp(modifier,"replace"))
+				animation_modifier = replaceLeds;
+			if(!strcmp(modifier,"inversesubtract"))
 				animation_modifier = replaceLeds;
 			
 			addAnimation(animation_function,speed,strength,radius,animation_modifier); 
