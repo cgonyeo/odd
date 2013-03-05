@@ -330,6 +330,23 @@ void smoothStrobe(double speed, double strength, double radius)
 		tempLeds[i]->R = (unsigned char)power;
 }
 
+//Animation that makes the brightness of the LEDs follow a sin curve
+void sinAnimation(double speed, double strength, double radius)
+{
+	(void)radius;
+	double time = totalTime * speed;
+	double power = 0;
+	if((int)time % 2 == 1)
+		power = remainder(time, 1);
+	else
+		power = 1 - remainder(time, 1);
+	power = sin(power);
+	if(strength >= 0 && strength <= 1)
+		power *= 254 * strength;
+	for(int i = 0; i < NUM_LEDS; i++)
+		tempLeds[i]->R = (unsigned char)power;
+}
+
 //Adds an animation
 void addAnimation( void (*function)(double, double, double), double speed, double strength, double radius, void (*modifier)( void ))
 {
