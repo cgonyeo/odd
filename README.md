@@ -10,3 +10,12 @@ This will be done by having an arduino control multiple TLC5940s that are poweri
 The LEDs to come in discrete panels of 5 LEDs with one TLC5940, which will be daisy chainable and can thus be easily added or removed if more or less LEDs are desired.
 
 Eventually both hardware buttons and a Web UI will be added as ways to control the LEDs.
+
+
+Here's an imcomplete parts list:
+ - Arduino Uno
+ - TLC5940NT (LED Driver)
+ - RGB LEDs (5x the # of TLCs)
+ - One of the PCBs from the eagle board folder for each TLC
+ - Resistors & capacitors
+ - LM3940 (Voltage Regulator)
