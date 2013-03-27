@@ -7,10 +7,47 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <errno.h>
+#include <arpa/inet.h>
+#include <sys/types.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
+#include "portaudio.h"
 
 #define PI 3.141592653
+#define INCPORT 3490
+#define OUTPORT 3491
+#define MAXRCVLEN 500
+
 #define NUM_LEDS 32
 #define DEV "/dev/ttyUSB0"
+
+#define SAMPLE_RATE (44100)
+#define FRAMES_PER_BUFFER (512)
+#define DITHER_FLAG (0)
+
+/* Select sample format. */
+#if 1
+#define PA_SAMPLE_TYPE  paFloat32
+typedef float SAMPLE;
+#define SAMPLE_SILENCE  (0.0f)
+#define PRINTF_S_FORMAT "%.8f"
+#elif 1
+#define PA_SAMPLE_TYPE  paInt16
+typedef short SAMPLE;
+#define SAMPLE_SILENCE  (0)
+#define PRINTF_S_FORMAT "%d"
+#elif 0
+#define PA_SAMPLE_TYPE  paInt8
+typedef char SAMPLE;
+#define SAMPLE_SILENCE  (0)
+#define PRINTF_S_FORMAT "%d"
+#else
+#define PA_SAMPLE_TYPE  paUInt8
+typedef unsigned char SAMPLE;
+#define SAMPLE_SILENCE  (128)
+#define PRINTF_S_FORMAT "%d"
+#endif
 
 double totalTime, elapsedTime;
 int done = 0;
@@ -32,6 +69,12 @@ typedef struct {
 	double strength;
 	double radius;
 } animation_t;
+
+typedef struct {
+	int frameIndex;
+	int maxFrameIndex;
+	SAMPLE *recordedSamples;
+} paTestData;
 
 odd_led_t* leds[NUM_LEDS]; //All the LEDs in use
 odd_led_t* tempLeds[NUM_LEDS]; //Current alterations to the LEDs, used with animations
@@ -185,6 +228,54 @@ void resetLeds()
 		leds[i]->G = 0;
 		leds[i]->B = 0;
 	}
+}
+
+//audio stuffs
+static int recordCallback( const void *inputBuffer, void *outputBuffer,
+							unsigned long framesPerBuffer,
+							const PaStreamCallbackFlags statusFlags,
+							void *userData )
+{
+	paTestData *data = (paTestData*)userData;
+	const SAMPLE *rptr = (const SAMPLE*)inputBuffer;
+	SAMPLE *wptr = &data->recordedSamples[data->frameIndex * 2];
+	long framesToCalc;
+	long i;
+	int finished;
+	unsigned long framesLeft = data->maxFrameIndex - data->frameIndex;
+
+	(void) outputBuffer;
+	//(void) timeInfo;
+	(void) statusFlags;
+	(void) userData;
+	if(framesLeft < framesPerBuffer)
+	{
+		framesToCalc = framesLeft;
+		finished = paComplete;
+	}
+	else
+	{
+		framesToCalc = framesPerBuffer;
+		finished = paContinue;
+	}
+	if(inputBuffer == NULL)
+	{
+		for(int i = 0; i < framesToCalc; i++)
+		{
+			*wptr++ = SAMPLE_SILENCE; //Left
+			*wptr++ = SAMPLE_SILENCE; //Right
+		}
+	}
+	else
+	{
+		for(int i = 0; i < framesToCalc; i++)
+		{
+			*wptr++ = *rptr++;
+			*wptr++ = *rptr++;
+		}
+	}
+	data->frameIndex += framesToCalc;
+	return finished;
 }
 
 //Animation: Lights up a clump of LEDs and then travels back and forth across the row
@@ -423,6 +514,70 @@ void *updateLoop(void *arg) {
 	return NULL;
 }
 
+void networkListen(char *input)
+{
+	printf("Starting listen...\n");
+	//char buffer[MAXRCVLEN + 1];
+	int mysocket, newsockfd;
+	socklen_t len;
+	struct sockaddr_in server, cli_addr;
+	mysocket = socket(AF_INET, SOCK_STREAM, 0);
+	printf("Socket made\n");
+	
+	if(mysocket == -1)
+	{
+		perror("socket");
+		return;
+	}
+	//bzero( &server, sizeof(server));
+
+	memset(&server, 0, sizeof(server));
+	server.sin_family = AF_INET;
+	server.sin_addr.s_addr = inet_addr("127.0.0.1");
+	server.sin_port = htons(INCPORT);
+
+	if(bind(mysocket, (struct sockaddr *)&server, sizeof(struct sockaddr)) < 0)
+	{
+		perror("Socket");
+		return;
+	}
+	printf("Bound to socket\n");
+
+	//len = -1;
+	//while(len < 0)
+	//	len = recv(mysocket, input, MAXRCVLEN, 0);
+
+	if( listen(mysocket, 5) < 0 )
+	{
+		perror("socket");
+		return;
+	}
+
+	len = sizeof(cli_addr);
+	printf("Listening on socket\n");
+	newsockfd = accept(mysocket, (struct sockaddr *) &cli_addr, &len);
+	printf("Accepted connection on port\n");
+	if(newsockfd < 0)
+	{
+		perror("socket");
+		return;
+	}
+
+
+
+	//if(len == -1)
+	//{
+	//	perror("socket");
+	//	return;
+	//}
+
+	//input[len] = '\0';
+
+	//printf("Received %s (%d bytes).\n", input, len);
+
+	close(mysocket);
+}
+
 void flushInput()
 {
 	char c = 'f';
@@ -442,6 +597,56 @@ void getUserInput(char *buffer)
 		ch = getchar();
 	}
 	buffer[char_count] = 0x00;
+}
+
+void audioStuff()
+{
+	PaStreamParameters inputParameters, outputParameters;
+	PaStream* stream;
+	PaError err=paNoError;
+	paTestData data;
+	int i;
+	int numSamples;
+	int numBytes;
+	double average;
+
+	data.frameIndex = 0;
+	numSamples = 441; //0.01 seconds of audio
+	numBytes = numSamples * sizeof(SAMPLE);
+	data.recordedSamples = (SAMPLE *) malloc( numBytes );
+	if(data.recordedSamples == NULL)
+		printf("Error allocating data.recordedSamples\n");
+	for(int i = 0; i < numSamples; i++)
+		data.recordedSamples[i] = 0;
+
+	err = Pa_Initialize();
+	if(err != paNoError)
+		printf("Pa_Initialize() failed!");
+	
+	inputParameters.channelCount = 2;
+	inputParameters.suggestedFormat = PA_SAMPLE_TYPE;
+	inputParameters.suggestedLateny = Pa_GetDeviceInfo(inputParameters.device)->defaultLowInputLatency;
+	inputParameters.hostApiSpecificStreamInfo = NULL;
+
+	err = Pa_OpenStream(
+		&stream,
+		&inputParameters,
+		NULL,
+		SAMPLE_RATE,
+		FRAMES_PER_BUFFER,
+		paClipOff,
+		recordCallback,
+		&data );
+	if(err != paNoError)
+		printf("Error opening stream");
+
+	while(!done)
+	{
+		Pa_Sleep(100);
+	}
+	err = Pa_CloseStream( stream );
+	if(err != paNoError)
+		printf("Error closing stream");
 }
 
 int main(void)
@@ -464,6 +669,8 @@ int main(void)
 		printf("command > ");
 		//scanf("%s", &input);
 		getUserInput(input);
+		//if(!strcmp(input, "network"))
+		//	networkListen(input);
 		if(!strcmp(input,"cyloneye") || !strcmp(input, "cyloneye -l") || !strcmp(input,"strobe") || !strcmp(input,"setall") || !strcmp(input, "smoothstrobe"))
 		{
 			double speed = -1, strength = -1, radius = -1;
@@ -487,6 +694,7 @@ int main(void)
 			while(strcmp(modifier,"add") && strcmp(modifier,"subtract") && strcmp(modifier,"replace") && strcmp(modifier,"inversesubtract")) {
 				printf("modifier > ");
 				getUserInput(modifier);
+				//networkListen(modifier);
 			}
 			void(*animation_function)(double, double, double);
 			void(*animation_modifier)( void ) = addLeds;

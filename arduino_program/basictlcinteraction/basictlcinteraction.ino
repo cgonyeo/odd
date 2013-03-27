@@ -31,11 +31,10 @@ void loop()
 
 void writeLed(int strength)
 {
-  //I have no clue why this needs to be counter - 2
-  Tlc.set(counter - 2, strength * 16);
+  Tlc.set(counter, strength * 16);
 //  Tlc.update();
   counter++;
   
-  if(counter > 32 + 2)
+  if(counter > 32)
     counter = 0;
 }
