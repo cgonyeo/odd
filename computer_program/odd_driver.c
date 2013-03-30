@@ -19,7 +19,7 @@
 #define OUTPORT 3491
 #define MAXRCVLEN 500
 
-#define NUM_LEDS 32
+#define NUM_LEDS 5
 #define DEV "/dev/ttyUSB0"
 
 #define SAMPLE_RATE (44100)
@@ -63,18 +63,18 @@ typedef struct {
 
 //Holds the parameters for a single animation
 typedef struct {
-	void (*function)(double, double, double);
+	void (*function)(double, double, odd_led_t*);
 	void (*modifier)( void );
 	double speed;
-	double strength;
 	double radius;
+	odd_led_t* color;
 } animation_t;
 
-typedef struct {
+/*typedef struct {
 	int frameIndex;
 	int maxFrameIndex;
 	SAMPLE *recordedSamples;
-} paTestData;
+} paTestData;*/
 
 odd_led_t* leds[NUM_LEDS]; //All the LEDs in use
 odd_led_t* tempLeds[NUM_LEDS]; //Current alterations to the LEDs, used with animations
@@ -85,6 +85,10 @@ void write_odd(FILE* fp) {
 	unsigned char end = 255;
 	for(int i=0; i<NUM_LEDS; i++) {
 		fwrite(&((leds[i]->R)), 1, 1, fp);
+		fflush(fp);
+		fwrite(&((leds[i]->G)), 1, 1, fp);
+		fflush(fp);
+		fwrite(&((leds[i]->B)), 1, 1, fp);
 		fflush(fp);
 	}
 	fwrite(&end, 1, 1, fp);
@@ -229,7 +233,7 @@ void resetLeds()
 		leds[i]->B = 0;
 	}
 }
-
+/*
 //audio stuffs
 static int recordCallback( const void *inputBuffer, void *outputBuffer,
 							unsigned long framesPerBuffer,
@@ -276,13 +280,11 @@ static int recordCallback( const void *inputBuffer, void *outputBuffer,
 	}
 	data->frameIndex += framesToCalc;
 	return finished;
-}
+}*/
 
 //Animation: Lights up a clump of LEDs and then travels back and forth across the row
 //Follows a basic sin curve (moves faster in the middle, slower at the ends)
-void cylonEye(double speed, double strength, double radius) {
-	if(strength < 0 || strength > 1)
-		return;
+void cylonEye(double speed, double radius, odd_led_t* color) {
 	//scale the time by our speed to alter the rate of tf the animation
 	double time = totalTime * speed;
 	//double to keep track of the location of the center
@@ -314,22 +316,21 @@ void cylonEye(double speed, double strength, double radius) {
 		ledDistances[i] *= -1;
 		ledDistances[i] -= numLeds - radius;
 		ledDistances[i] *= 1 / radius;
-		ledDistances[i] *= 254 * strength;
-		if(ledDistances[i] > 254)
-			ledDistances[i] = 254;
 	}
 	//If an LED has a positive brightness, set it.
 	for(int i = 0; i < NUM_LEDS; i++)
 	{
 		if(ledDistances[i] > 0)
-			tempLeds[i]->R = (unsigned char)ledDistances[i];
+		{
+			tempLeds[i]->R = color->R * (unsigned char)ledDistances[i];
+			tempLeds[i]->G = color->G * (unsigned char)ledDistances[i];
+			tempLeds[i]->B = color->B * (unsigned char)ledDistances[i];
+		}
 	}
 }
 
 //Animation: same as cylonEye but follows a linear movement (constant speed)
-void cylonEye_Linear(double speed, double strength, double radius) {
-	if(strength < 0 || strength > 1)
-		return;
+void cylonEye_Linear(double speed, double radius, odd_led_t* color) {
 	//scale the time by our speed to alter the rate of tf the animation
 	double time = totalTime * speed;
 	//double to keep track of the location of the center
@@ -360,48 +361,50 @@ void cylonEye_Linear(double speed, double strength, double radius) {
 		ledDistances[i] *= -1;
 		ledDistances[i] -= numLeds - radius;
 		ledDistances[i] *= 1 / radius;
-		ledDistances[i] *= 254 * strength;
-		if(ledDistances[i] > 254)
-			ledDistances[i] = 254;
 	}
 	//If an LED has a positive brightness, set it.
 	for(int i = 0; i < NUM_LEDS; i++)
 	{
 		if(ledDistances[i] > 0)
-			tempLeds[i]->R = (unsigned char)ledDistances[i];
+		{
+			tempLeds[i]->R = color->R * (unsigned char)ledDistances[i];
+			tempLeds[i]->G = color->G * (unsigned char)ledDistances[i];
+			tempLeds[i]->B = color->B * (unsigned char)ledDistances[i];
+		}
 	}
 }
 
 //Animation: Turns the LEDs off and on and off and on and off and on and off...
-void strobe(double speed, double strength, double radius)
+void strobe(double speed, double radius, odd_led_t* color)
 {
 	(void)radius;
-	if(strength < 0 || strength > 1)
-		return;
 	double time = totalTime * speed;
 	double power = 0;
 	if((int)time % 2 == 1)
-		power = 254 * strength;
+		power = 1;
 	for(int i = 0; i < NUM_LEDS; i++)
 	{
-		tempLeds[i]->R = (unsigned char)power;
+		tempLeds[i]->R = color->R * power;
+		tempLeds[i]->G = color->G * power;
+		tempLeds[i]->B = color->B * power;
 	}
 }
 
-//Animation: Sets all LEDs to strength
-void setAll(double speed, double strength, double radius)
+//Animation: Sets all LEDs to color
+void setAll(double speed, double radius, odd_led_t* color)
 {
 	(void)radius;
 	(void)speed;
-	if(strength < 0 || strength > 1)
-		return;
-	double power = 254 * strength;
 	for(int i = 0; i < NUM_LEDS; i++)
-		tempLeds[i]->R = (unsigned char)power;
+	{
+		tempLeds[i]->R = color->R;
+		tempLeds[i]->G = color->G;
+		tempLeds[i]->B = color->B;
+	}
 }
 
 //Animation: Like strobe but fades LEDs in and out and pauses when they're off.
-void smoothStrobe(double speed, double strength, double radius)
+void smoothStrobe(double speed, double radius, odd_led_t* color)
 {
 	(void)radius;
 	double time = totalTime * speed;
@@ -415,14 +418,15 @@ void smoothStrobe(double speed, double strength, double radius)
 	power -= 0.5;
 	if(power < 0)
 		power = 0;
-	if(strength >= 0 && strength <= 1)
-		power *= 254 * strength;
-	for(int i = 0; i < NUM_LEDS; i++)
-		tempLeds[i]->R = (unsigned char)power;
+	for(int i = 0; i < NUM_LEDS; i++) {
+		tempLeds[i]->R = color->R * power;
+		tempLeds[i]->G = color->G * power;
+		tempLeds[i]->B = color->B * power;
+	}
 }
 
 //Animation that makes the brightness of the LEDs follow a sin curve
-void sinAnimation(double speed, double strength, double radius)
+void sinAnimation(double speed, double radius, odd_led_t* color)
 {
 	(void)radius;
 	double time = totalTime * speed;
@@ -432,20 +436,22 @@ void sinAnimation(double speed, double strength, double radius)
 	else
 		power = 1 - remainder(time, 1);
 	power = sin(power);
-	if(strength >= 0 && strength <= 1)
-		power *= 254 * strength;
 	for(int i = 0; i < NUM_LEDS; i++)
-		tempLeds[i]->R = (unsigned char)power;
+	{
+		tempLeds[i]->R = color->R * power;
+		tempLeds[i]->G = color->G * power;
+		tempLeds[i]->B = color->B * power;
+	}
 }
 
 //Adds an animation
-void addAnimation( void (*function)(double, double, double), double speed, double strength, double radius, void (*modifier)( void ))
+void addAnimation( void (*function)(double, double, odd_led_t*), double speed, double radius, odd_led_t* color, void (*modifier)( void ))
 {
 	animation_t* derp = malloc(sizeof(animation_t));
 	derp->function = function;
 	derp->speed = speed;
-	derp->strength = strength;
 	derp->radius = radius;
+	derp->color = color;
 	derp->modifier = modifier;
 	animations[numAnimations++] = derp;
 }
@@ -496,7 +502,7 @@ void *updateLoop(void *arg) {
 
 		for(int i = 0; i < numAnimations; i++)
 		{
-			animations[i]->function(animations[i]->speed, animations[i]->strength, animations[i]->radius);
+			animations[i]->function(animations[i]->speed, animations[i]->radius, animations[i]->color);
 			animations[i]->modifier();
 		}
 				
@@ -598,7 +604,7 @@ void getUserInput(char *buffer)
 	}
 	buffer[char_count] = 0x00;
 }
-
+/*
 void audioStuff()
 {
 	PaStreamParameters inputParameters, outputParameters;
@@ -647,7 +653,7 @@ void audioStuff()
 	err = Pa_CloseStream( stream );
 	if(err != paNoError)
 		printf("Error closing stream");
-}
+}*/
 
 int main(void)
 {
@@ -671,9 +677,10 @@ int main(void)
 		getUserInput(input);
 		//if(!strcmp(input, "network"))
 		//	networkListen(input);
-		if(!strcmp(input,"cyloneye") || !strcmp(input, "cyloneye -l") || !strcmp(input,"strobe") || !strcmp(input,"setall") || !strcmp(input, "smoothstrobe"))
+		if(!strcmp(input,"cyloneye") || !strcmp(input, "cyloneye -l") || !strcmp(input,"strobe") || !strcmp(input,"setall") || !strcmp(input, "smoothstrobe") || !strcmp(input,"sin"))
 		{
-			double speed = -1, strength = -1, radius = -1;
+			double speed = -1, radius = -1;
+			int r = -1, g = -1, b = -1;
 			char modifier[20];
 			modifier[0] = '\0';
 			while(speed < 0) {
@@ -681,14 +688,24 @@ int main(void)
 				scanf("%lf",&speed);
 				flushInput();
 			}
-			while(strength < 0) {
-				printf("strength > ");
-				scanf("%lf",&strength);
-				flushInput();
-			}
 			while(radius < 0) {
 				printf("radius > ");
 				scanf("%lf",&radius);
+				flushInput();
+			}
+			while(r < 0 || r > 254) {
+				printf("R > ");
+				scanf("%u",&r);
+				flushInput();
+			}
+			while(g < 0 || g > 254) {
+				printf("G > ");
+				scanf("%u",&g);
+				flushInput();
+			}
+			while(b < 0 || b > 254) {
+				printf("B > ");
+				scanf("%u",&b);
 				flushInput();
 			}
 			while(strcmp(modifier,"add") && strcmp(modifier,"subtract") && strcmp(modifier,"replace") && strcmp(modifier,"inversesubtract")) {
@@ -696,7 +713,7 @@ int main(void)
 				getUserInput(modifier);
 				//networkListen(modifier);
 			}
-			void(*animation_function)(double, double, double);
+			void(*animation_function)(double, double, odd_led_t*);
 			void(*animation_modifier)( void ) = addLeds;
 			if(!strcmp(input,"cyloneye"))
 				animation_function = cylonEye;
@@ -708,6 +725,8 @@ int main(void)
 				animation_function = setAll;
 			if(!strcmp(input,"smoothstrobe"))
 				animation_function = smoothStrobe;
+			if(!strcmp(input,"sin"))
+				animation_function = sinAnimation;
 			if(!strcmp(modifier,"add"))
 				animation_modifier = addLeds;
 			if(!strcmp(modifier,"subtract"))
@@ -716,8 +735,13 @@ int main(void)
 				animation_modifier = replaceLeds;
 			if(!strcmp(modifier,"inversesubtract"))
 				animation_modifier = replaceLeds;
+
+			odd_led_t* color = malloc(sizeof(odd_led_t));
+			color->R = (unsigned char)r;
+			color->G = (unsigned char)g;
+			color->B = (unsigned char)b;
 			
-			addAnimation(animation_function,speed,strength,radius,animation_modifier); 
+			addAnimation(animation_function,speed,radius,color,animation_modifier); 
 		}
 		
 		if(!strcmp(input,"exit"))
@@ -736,7 +760,10 @@ int main(void)
 	done = 1;
 	pthread_join(ul, NULL);
 	for(int i = 0; i < numAnimations; i++)
+	{
+		free(animations[numAnimations]->color);
 		free(animations[numAnimations]);
+	}
 	for(int i = 0; i < NUM_LEDS; i++)
 	{
 		free(leds[i]);
