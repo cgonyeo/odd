@@ -136,8 +136,8 @@ double formatTime(long int seconds, long int useconds)
 {
 	double time = seconds % 10000 + (useconds - useconds % 1000) / 1000000.0;
 	
-	if(time > 100000)
-		time = remainder(time, 100000);
+	if(time > 1000)
+		time = remainder(time, 1000);
 	
 	return time;
 }
@@ -207,6 +207,28 @@ void inverseSubtractLeds()
 	invertTempLeds();
 	subtractLeds();
 	invertTempLeds();
+}
+
+//Multiplies tempLeds to leds
+void multiplyLeds()
+{
+	for(int i = 0; i < NUM_LEDS; i++)
+	{
+		if(leds[i]->R * tempLeds[i]->R > 254)
+			leds[i]->R = 254;
+		else
+			leds[i]->R *= tempLeds[i]->R;
+		
+		if(leds[i]->G * tempLeds[i]->G > 254)
+			leds[i]->G = 254;
+		else
+			leds[i]->G *= tempLeds[i]->G;
+		
+		if(leds[i]->B * tempLeds[i]->B > 254)
+			leds[i]->B = 254;
+		else
+			leds[i]->B *= tempLeds[i]->B;
+	}
 }
 
 //Replaces the LEDs in the LED array for every value greater than 0.
@@ -293,7 +315,11 @@ void cylonEye(double speed, double radius, odd_led_t* color) {
 	int numLeds = NUM_LEDS - 1;
 	//clear the tempLeds array so we can use it
 	for(int i = 0; i < NUM_LEDS; i++)
+	{
 		tempLeds[i]->R = 0;
+		tempLeds[i]->G = 0;
+		tempLeds[i]->B = 0;
+	}
 	
 	//Calculate the center
 	if((int)time % 2 == 1)
@@ -322,9 +348,9 @@ void cylonEye(double speed, double radius, odd_led_t* color) {
 	{
 		if(ledDistances[i] > 0)
 		{
-			tempLeds[i]->R = color->R * (unsigned char)ledDistances[i];
-			tempLeds[i]->G = color->G * (unsigned char)ledDistances[i];
-			tempLeds[i]->B = color->B * (unsigned char)ledDistances[i];
+			tempLeds[i]->R = color->R * ledDistances[i];
+			tempLeds[i]->G = color->G * ledDistances[i];
+			tempLeds[i]->B = color->B * ledDistances[i];
 		}
 	}
 }
@@ -339,7 +365,11 @@ void cylonEye_Linear(double speed, double radius, odd_led_t* color) {
 	int numLeds = NUM_LEDS - 1;
 	//clear the tempLeds array so we can use it
 	for(int i = 0; i < NUM_LEDS; i++)
+	{
 		tempLeds[i]->R = 0;
+		tempLeds[i]->G = 0;
+		tempLeds[i]->B = 0;
+	}
 	
 	//Calculate the center
 	if((int)time % 2 == 1)
@@ -367,9 +397,9 @@ void cylonEye_Linear(double speed, double radius, odd_led_t* color) {
 	{
 		if(ledDistances[i] > 0)
 		{
-			tempLeds[i]->R = color->R * (unsigned char)ledDistances[i];
-			tempLeds[i]->G = color->G * (unsigned char)ledDistances[i];
-			tempLeds[i]->B = color->B * (unsigned char)ledDistances[i];
+			tempLeds[i]->R = color->R * ledDistances[i];
+			tempLeds[i]->G = color->G * ledDistances[i];
+			tempLeds[i]->B = color->B * ledDistances[i];
 		}
 	}
 }
@@ -469,15 +499,14 @@ void removeAnimation(int index)
 
 //Program's update loop
 void *updateLoop(void *arg) {
-	//printf("Thread started.\n");
 	(void)arg;
 	int failed = 0;
-	//Open the stream, record if it fails
+	//Open the stream, exit if it fails
 	int fd = open(DEV, O_WRONLY);
 	if( fd == -1 ) {
 		perror("open");
 		failed = 1;
-		//exit(EXIT_FAILURE);
+		exit(EXIT_FAILURE);
 	}
 	FILE *fp;
 	if(!failed)
@@ -708,7 +737,7 @@ int main(void)
 				scanf("%u",&b);
 				flushInput();
 			}
-			while(strcmp(modifier,"add") && strcmp(modifier,"subtract") && strcmp(modifier,"replace") && strcmp(modifier,"inversesubtract")) {
+			while(strcmp(modifier,"add") && strcmp(modifier,"subtract") && strcmp(modifier,"replace") && strcmp(modifier,"inversesubtract") && strcmp(modifier,"multiply")) {
 				printf("modifier > ");
 				getUserInput(modifier);
 				//networkListen(modifier);
@@ -735,6 +764,8 @@ int main(void)
 				animation_modifier = replaceLeds;
 			if(!strcmp(modifier,"inversesubtract"))
 				animation_modifier = replaceLeds;
+			if(!strcmp(modifier,"multiply"))
+				animation_modifier = multiplyLeds;
 
 			odd_led_t* color = malloc(sizeof(odd_led_t));
 			color->R = (unsigned char)r;
@@ -761,7 +792,7 @@ int main(void)
 	pthread_join(ul, NULL);
 	for(int i = 0; i < numAnimations; i++)
 	{
-		free(animations[numAnimations]->color);
+		//free(animations[numAnimations]->color);
 		free(animations[numAnimations]);
 	}
 	for(int i = 0; i < NUM_LEDS; i++)
