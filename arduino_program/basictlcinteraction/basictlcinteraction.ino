@@ -6,7 +6,7 @@ void setup()
 {
   Serial.begin(57600);
   Tlc.init();
-  Tlc.setAll(4000);
+  Tlc.setAll(100);
   delay(10);
   Tlc.update();
   counter = 0;
