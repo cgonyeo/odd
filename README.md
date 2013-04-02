@@ -5,15 +5,16 @@ One Dimensional Display
 
 This project aims to create a single row of RGB LEDs that can be directly controlled by a computer. The computer will be able to display single colors, basic hardcoded animations, dynamic animations (like audio visualization), and animations in reaction to various events (like someone entered a room, or the user reveived a message on Facebook).
 
-This will be done by having an arduino control multiple TLC5940s that are powering the LEDs. The arduino will connect to a computer over USB, and receive updated states for the LEDs very rapidly, thus producing animations. The computer will be a linux computer (eventually a raspberry pi) running a service written in C.
+The hardware will consist of one TLC5940NT, five RGB LEDs, one voltage regulator, and some capacitors and resistors on a PCB. These circuit boardswill be daisy chainable, with an end goal of about 50 boards (150 LEDs).
 
-The LEDs to come in discrete panels of 5 LEDs with one TLC5940, which will be daisy chainable and can thus be easily added or removed if more or less LEDs are desired.
+The hardware will be controlled in roughly the following fashion:
 
-Eventually both hardware buttons and a Web UI will be added as ways to control the LEDs.
+HTML/CSS/Javascript ---> Python ---> C ---> Arduino ---> TLC5940NT ---> LEDs
 
+The Javascript uses Websockets (you need an up-to-date browser to do this) to communicate with a Python server, which uses normal sockets to parrot messages to and from the C program. The C program calculates the various animations and tracks each LED's color. It passes updated "frames" over serial to an Arduino, and the Arduino controls the TLC5940NTs which power the LEDs.
 
 Here's an imcomplete parts list:
- - Arduino Uno
+ - Arduino
  - TLC5940NT (LED Driver)
  - RGB LEDs (5x the # of TLCs)
  - One of the PCBs from the eagle board folder for each TLC

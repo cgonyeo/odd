@@ -160,6 +160,16 @@ void addAnimation( void (*function)(double, double, double, odd_led_t*, odd_led_
 	animations[numAnimations++] = derp;
 }
 
+//Adds an animation
+void updateAnimation( int index, double speed, double radius, odd_led_t* color)
+{
+	animations[index]->speed = speed;
+	animations[index]->radius = radius;
+	odd_led_t *temp = animations[index]->color;
+	animations[index]->color = color;
+	free(temp);
+}
+
 //Removes an animation
 void removeAnimation(int index)
 {
@@ -321,14 +331,14 @@ void *networkListen(char *buffer)
 		printf("Error calling listen\n");
 		exit(EXIT_FAILURE);
 	}
+	printf("Accepting on socket\n");
+	if((conn_s = accept(list_s, NULL, NULL)) < 0)
+	{
+		printf("Error calling accept\n");
+		exit(EXIT_FAILURE);
+	}
 	while(!done)
 	{
-		printf("Accepting on socket\n");
-		if((conn_s = accept(list_s, NULL, NULL)) < 0)
-		{
-			printf("Error calling accept\n");
-			exit(EXIT_FAILURE);
-		}
 		printf("Connection made\n");
 		if(read(conn_s, buffer, 255) < 0)
 		{
@@ -336,13 +346,7 @@ void *networkListen(char *buffer)
 			exit(EXIT_FAILURE);
 		}
 		printf("Received: %s\n", buffer);
-		/*
-		if(write(conn_s, "ok", 12) < 0)
-		{
-			printf("Error writing\n");
-			exit(EXIT_FAILURE);
-		}
-		*/
+		
 		double speed = -1, radius = -1;
 		int r = -1, g = -1, b = -1;
 
@@ -359,7 +363,7 @@ void *networkListen(char *buffer)
 		if(temp != NULL)
 			*temp++ = '\0';
 
-		while(line != NULL)
+		while(line != NULL && strcmp(line,""))
 		{
 			printf("Line: '%s'\n", line);
 			tok = strchr(line, ' ');
@@ -385,6 +389,47 @@ void *networkListen(char *buffer)
 			else if(!strcmp(line,"time"))
 			{
 				printf("Time: %f\n", totalTime);
+			}
+			else if(!strcmp(line,"stop"))
+			{
+				for(int i = numAnimations; i > 0; i--)
+					removeAnimation(0);
+			}
+			else if(!strcmp(line,"sup?"))
+			{
+				char *reply;
+				char *temp;
+				char *temp2;
+				if(numAnimations != 0)
+					for(int i = 0; i < numAnimations; i++)
+					{
+						if(animations[i]->function == setAll)
+							temp = "setall";
+						else if(animations[i]->function == strobe)
+							temp = "strobe";
+						else if(animations[i]->function == smoothStrobe)
+							temp = "smoothstrobe";
+						else if(animations[i]->function == cylonEye)
+							temp = "cyloneye";
+						else if(animations[i]->function == sinAnimation)
+							temp = "sinanimation";
+
+						if(animations[i]->modifier == addLeds)
+							temp2 = "add";
+						if(animations[i]->modifier == subtractLeds)
+							temp2 = "subtract";
+						if(animations[i]->modifier == multiplyLeds)
+							temp2 = "multiply";
+
+						snprintf(reply, sizeof(reply), "%s%s %f %f %i %i %i %s !", reply, temp, animations[i]->speed, animations[i]->radius, animations[i]->color->R, animations[i]->color->G, animations[i]->color->B, temp2);
+					}
+				else
+					strcpy(reply,"Not much, you?");
+					/*if(write(conn_s, reply, strlen(reply)) < 0)
+					{
+						printf("Error writing\n");
+						exit(EXIT_FAILURE);
+					}*/
 			}
 			else
 			{
@@ -416,6 +461,24 @@ void *networkListen(char *buffer)
 				r = atoi(rc);
 				g = atoi(gc);
 				b = atoi(bc);
+
+				if(speed < 0)
+					speed = 0;
+				if(radius < 0)
+					radius = 0;
+
+				if(r > 254)
+					r = 254;
+				if(b > 254)
+					b = 254;
+				if(g > 254)
+					g = 254;
+				if(r < 0)
+					r = 0;
+				if(b < 0)
+					b = 0;
+				if(g < 0)
+					g = 0;
 				
 				void(*animation_function)(double, double, double, odd_led_t*, odd_led_t *[NUM_LEDS]) = NULL;
 				void(*animation_modifier)( odd_led_t* leds[NUM_LEDS], odd_led_t *[NUM_LEDS] ) = NULL;
@@ -453,7 +516,9 @@ void *networkListen(char *buffer)
 				printf("B: '%i'\n",color->B);
 				printf("Modifier: '%s'\n",modifier);
 
-				if(animation_function == NULL || animation_modifier == NULL)
+				if (!strcmp(animName, "update"))
+					updateAnimation(atoi(modifier), speed, radius, color);
+				else if(animation_function == NULL || animation_modifier == NULL)
 					printf("Bad input?!\n");
 				else
 					addAnimation(animation_function,speed,radius,color,animation_modifier);
@@ -466,9 +531,11 @@ void *networkListen(char *buffer)
 			printf("New line: %s\n", line);
 			printf("Buffer: %s\n", buffer);*/
 			line = temp;
+			printf("Line processing done.\n1: '%s'\n",line);
 			temp = strchr(buffer, '!');
 			if(temp != NULL)
 				*temp++ = '\0';
+			printf("2: '%s'\n",line);
 		}
 	}
 	

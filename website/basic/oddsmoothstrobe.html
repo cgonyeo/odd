@@ -1,0 +1,60 @@
+<!DOCTYPE HTML>
+<html>
+	<head>
+	<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+	<title>Odd WebUI</title>
+	<link rel="stylesheet" type="text/css" href="../css/oddwebui.css">
+	<script src="http://code.jquery.com/jquery.min.js"></script>
+	<script>
+		var animation = 'smoothstrobe';
+		var speedOn = 'y';
+		var radiusOn = 'n';
+		var modifier = 'add';
+	</script>
+	<script type="text/javascript" src="../scripts/oddbasic.js"></script>	
+	</head>
+	<body>
+		<div id=bg>
+			<div id=advButton>
+				<p id=advText>Advanced</p>
+				<a href="./oddsetall.html">
+					<span class=animLink></span>
+				</a>
+			</div>
+			<div id=backButton>
+				<p id=advText>Back</p>
+				<a href="../index.html">
+					<span class=animLink></span>
+				</a>
+			</div>
+			<div id=content>
+				<p id=status>Not Connected<p>
+				<span id=speed>
+					Speed:
+					<span id=Snum>50</span>
+					<input type="range" min="0" max="100" value="50" onchange="Supdate(this.value)" name="Speed"/>
+				</span>
+				<span id=radius>
+					Radius:
+					<span id=RAnum>15</span>
+					<input type="range" min="0" max="30" value="15" onchange="RAupdate(this.value)" name="Radius"/>
+				</span>
+				<span id=red>
+					Red:
+					<span id=Rnum>10</span>
+					<input type="range" min="0" max="255" value="10" onchange="Rupdate(this.value)" name="Red"/>
+				</span>
+				<span id=green>
+					Green:
+					<span id=Gnum>10</span>
+					<input type="range" min="0" max="255" value="10" onchange="Gupdate(this.value)" name="Green"/>
+				</span>
+				<span id=blue>
+					Blue:
+					<span id=Bnum>10</span>
+					<input type="range" min="0" max="255" value="10" onchange="Bupdate(this.value)" name="Blue"/>
+				</span>
+			</div>
+		</div>
+	</body>
+</html>
