@@ -13,6 +13,7 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include "portaudio.h"
+#include "odd_audio.h"
 #include "odd_data_types.h"
 #include "odd_math.h"
 #include "odd_animations.h"
@@ -185,4 +186,61 @@ void sinAnimation(double speed, double radius, double totalTime, odd_led_t* colo
 		tempLeds[i]->G = color->G * power;
 		tempLeds[i]->B = color->B * power;
 	}
+}
+
+void dammitAnimation(double speed, double radius, double totalTime, odd_led_t* color, odd_led_t* tempLeds[NUM_LEDS])
+{
+	(void)speed;
+	(void)radius;
+	(void)totalTime;
+	
+	double avg = 0;
+
+	SAMPLE soundBuffer[FRAMES_PER_BUFFER];
+	getSoundBuffer(soundBuffer);
+
+	for(int i = 0; i < FRAMES_PER_BUFFER; i++)
+	{
+		if(soundBuffer[i] > 0)
+			avg += soundBuffer[i];
+		else
+			avg -= soundBuffer[i];
+	}
+	avg /= FRAMES_PER_BUFFER;
+	//printf("Average: %f\n", avg);
+
+	double r = color->R / 254;
+	double g = color->G / 254;
+	double b = color->B / 254;
+
+	double scale = 1;
+
+	int biggest = 0;
+	if(g > r && g > b)
+		biggest += 1;
+	if(b > r && b > g)
+		biggest += 2;
+
+	switch(biggest)
+	{
+		case 0:
+			scale = 100 / r;
+			break;
+		case 1:
+			scale = 100 / g;
+			break;
+		case 2:
+			scale = 100 / b;
+			break;
+		default:
+			scale = 100;
+	}
+
+	for(int i = 0; i < NUM_LEDS; i++)
+	{
+		tempLeds[i]->R = color->R * avg;
+		tempLeds[i]->G = color->G * avg;
+		tempLeds[i]->B = color->B * avg;
+	}
+	
 }

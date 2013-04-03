@@ -13,6 +13,7 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include "portaudio.h"
+#include "odd_audio.h"
 #include "odd_data_types.h"
 #include "odd_math.h"
 #include "odd_animations.h"
@@ -24,33 +25,16 @@
 #define LISTENQ (1024)
 
 #define DEV "/dev/ttyUSB0"
-
+/*
 #define SAMPLE_RATE (44100)
 #define FRAMES_PER_BUFFER (512)
 #define DITHER_FLAG (0)
-
+*/
 /* Select sample format. */
-#if 1
-#define PA_SAMPLE_TYPE  paFloat32
+/*#define PA_SAMPLE_TYPE  paFloat32
 typedef float SAMPLE;
 #define SAMPLE_SILENCE  (0.0f)
-#define PRINTF_S_FORMAT "%.8f"
-#elif 1
-#define PA_SAMPLE_TYPE  paInt16
-typedef short SAMPLE;
-#define SAMPLE_SILENCE  (0)
-#define PRINTF_S_FORMAT "%d"
-#elif 0
-#define PA_SAMPLE_TYPE  paInt8
-typedef char SAMPLE;
-#define SAMPLE_SILENCE  (0)
-#define PRINTF_S_FORMAT "%d"
-#else
-#define PA_SAMPLE_TYPE  paUInt8
-typedef unsigned char SAMPLE;
-#define SAMPLE_SILENCE  (128)
-#define PRINTF_S_FORMAT "%d"
-#endif
+#define PRINTF_S_FORMAT "%.8f"*/
 
 long double totalTime, elapsedTime;
 int done = 0;
@@ -66,9 +50,13 @@ odd_led_t* leds[NUM_LEDS]; //All the LEDs in use
 odd_led_t* tempLeds[NUM_LEDS]; //Current alterations to the LEDs, used with animations
 animation_t* animations[50]; //All currently used animations.
 
+//SAMPLE soundBuffer[FRAMES_PER_BUFFER];
+//PaStream* stream;
+
 //Writes leds to the file stream fp.
 void write_odd(FILE* fp) {
 	unsigned char end = 255;
+	//printf("LED0 val: %i\n",leds[0]->R);
 	for(int i=0; i<NUM_LEDS; i++) {
 		fwrite(&((leds[i]->R)), 1, 1, fp);
 		fflush(fp);
@@ -99,54 +87,6 @@ void resetLeds()
 		leds[i]->B = 0;
 	}
 }
-/*
-//audio stuffs
-static int recordCallback( const void *inputBuffer, void *outputBuffer,
-							unsigned long framesPerBuffer,
-							const PaStreamCallbackFlags statusFlags,
-							void *userData )
-{
-	paTestData *data = (paTestData*)userData;
-	const SAMPLE *rptr = (const SAMPLE*)inputBuffer;
-	SAMPLE *wptr = &data->recordedSamples[data->frameIndex * 2];
-	long framesToCalc;
-	long i;
-	int finished;
-	unsigned long framesLeft = data->maxFrameIndex - data->frameIndex;
-
-	(void) outputBuffer;
-	//(void) timeInfo;
-	(void) statusFlags;
-	(void) userData;
-	if(framesLeft < framesPerBuffer)
-	{
-		framesToCalc = framesLeft;
-		finished = paComplete;
-	}
-	else
-	{
-		framesToCalc = framesPerBuffer;
-		finished = paContinue;
-	}
-	if(inputBuffer == NULL)
-	{
-		for(int i = 0; i < framesToCalc; i++)
-		{
-			*wptr++ = SAMPLE_SILENCE; //Left
-			*wptr++ = SAMPLE_SILENCE; //Right
-		}
-	}
-	else
-	{
-		for(int i = 0; i < framesToCalc; i++)
-		{
-			*wptr++ = *rptr++;
-			*wptr++ = *rptr++;
-		}
-	}
-	data->frameIndex += framesToCalc;
-	return finished;
-}*/
 
 //Adds an animation
 void addAnimation( void (*function)(double, double, double, odd_led_t*, odd_led_t *[NUM_LEDS]), double speed, double radius, odd_led_t* color, void (*modifier)( odd_led_t* leds[NUM_LEDS], odd_led_t *[NUM_LEDS] ))
@@ -251,33 +191,47 @@ void getUserInput(char *buffer)
 	buffer[char_count] = 0x00;
 }
 /*
-void audioStuff()
+static int recordCallback( const void *inputBuffer, void *outputBuffer,
+			unsigned long framesPerBuffer, 
+			const PaStreamCallbackTimeInfo* timeInfo,
+			PaStreamCallbackFlags statusFlags,
+			void *userData )
 {
-	PaStreamParameters inputParameters, outputParameters;
-	PaStream* stream;
-	PaError err=paNoError;
-	paTestData data;
-	int i;
-	int numSamples;
-	int numBytes;
-	double average;
+	const SAMPLE *input = (const SAMPLE*)inputBuffer;
+	(void)outputBuffer;
+	(void)timeInfo;
+	(void)statusFlags;
+	(void)userData;
 
-	data.frameIndex = 0;
-	numSamples = 441; //0.01 seconds of audio
-	numBytes = numSamples * sizeof(SAMPLE);
-	data.recordedSamples = (SAMPLE *) malloc( numBytes );
-	if(data.recordedSamples == NULL)
-		printf("Error allocating data.recordedSamples\n");
-	for(int i = 0; i < numSamples; i++)
-		data.recordedSamples[i] = 0;
+	for(int i = 0; i < framesPerBuffer; i++)
+	{
+		soundBuffer[i] = input[i];
+	}
+	return paContinue;
+}
 
+void audioInitialization()
+{
+	PaStreamParameters inputParameters;
+	PaError err = paNoError;
+	
 	err = Pa_Initialize();
 	if(err != paNoError)
-		printf("Pa_Initialize() failed!");
-	
+	{
+		printf("Error calling PaInitialize (line 198)\n");
+		exit(EXIT_FAILURE);
+	}
+
+	inputParameters.device = Pa_GetDefaultInputDevice();
+	if(inputParameters.device == paNoDevice)
+	{
+		printf("Error: no default input device\n");
+		exit(EXIT_FAILURE);
+	}
+
 	inputParameters.channelCount = 2;
-	inputParameters.suggestedFormat = PA_SAMPLE_TYPE;
-	inputParameters.suggestedLateny = Pa_GetDeviceInfo(inputParameters.device)->defaultLowInputLatency;
+	inputParameters.sampleFormat = PA_SAMPLE_TYPE;
+	inputParameters.suggestedLatency = Pa_GetDeviceInfo(inputParameters.device)->defaultLowInputLatency;
 	inputParameters.hostApiSpecificStreamInfo = NULL;
 
 	err = Pa_OpenStream(
@@ -288,19 +242,35 @@ void audioStuff()
 		FRAMES_PER_BUFFER,
 		paClipOff,
 		recordCallback,
-		&data );
+		NULL);
+	
 	if(err != paNoError)
-		printf("Error opening stream");
-
-	while(!done)
 	{
-		Pa_Sleep(100);
+		printf("Error opening stream\n");
+		exit(EXIT_FAILURE);
 	}
-	err = Pa_CloseStream( stream );
-	if(err != paNoError)
-		printf("Error closing stream");
-}*/
 
+	err = Pa_StartStream(stream);
+	if(err != paNoError)
+	{
+		printf("Error starting stream\n");
+		exit(EXIT_FAILURE);
+	}
+
+	printf("Audio setup complete\n");
+}
+
+void audioStop()
+{
+	PaError err = paNoError;
+	err = Pa_CloseStream(stream);
+	if(err != paNoError)
+	{
+		printf("Error closing audio stream\n");
+		exit(EXIT_FAILURE);
+	}
+}
+*/
 void *networkListen(char *buffer)
 {
 	int list_s;		//Listening socket
@@ -563,6 +533,16 @@ int main(void)
 	
 	char input[255];
 	input[0] = '\0';
+
+	audioInitialization();
+
+	odd_led_t* color = malloc(sizeof(odd_led_t));
+	color->R = 35;
+	color->G = 5;
+	color->B = 5;
+
+	addAnimation(dammitAnimation, 1, 1, color, addLeds);
+
 	while(!done)
 	{
 		networkListen(input);
@@ -652,6 +632,7 @@ int main(void)
 	printf("Exiting...\n");
 	done = 1;
 	pthread_join(ul, NULL);
+	audioStop();
 	for(int i = 0; i < numAnimations; i++)
 	{
 		//free(animations[numAnimations]->color);

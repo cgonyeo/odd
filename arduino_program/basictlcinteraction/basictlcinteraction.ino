@@ -17,7 +17,7 @@ void loop()
   if(Serial.available())
   {
     int input = Serial.read();
-     Serial.write(input);
+     //Serial.write(input);
     
     if(input == 255)
     {
