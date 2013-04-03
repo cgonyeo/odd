@@ -52,7 +52,7 @@ typedef unsigned char SAMPLE;
 #define PRINTF_S_FORMAT "%d"
 #endif
 
-double totalTime, elapsedTime;
+long double totalTime, elapsedTime;
 int done = 0;
 int numAnimations = 0;
 int timeLoops = 0;
@@ -388,7 +388,7 @@ void *networkListen(char *buffer)
 			}
 			else if(!strcmp(line,"time"))
 			{
-				printf("Time: %f\n", totalTime);
+				printf("Time: %Lf\n", totalTime);
 			}
 			else if(!strcmp(line,"stop"))
 			{

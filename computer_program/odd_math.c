@@ -37,7 +37,7 @@ double sin(double x)
 //Returns the time as a double (formatted to be smaller)
 double formatTime(long int seconds, long int useconds)
 {
-	double time = seconds % 10000 + (useconds - useconds % 1000) / 1000000.0;
+	long double time = seconds % 10000 + (useconds - useconds % 1000) / 1000000.0;
 	
 	if(time > 100000)
 		time = remainder(time, 100000);

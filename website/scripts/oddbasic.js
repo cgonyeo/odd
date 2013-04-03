@@ -60,8 +60,8 @@ function removeUnusedControls()
 function send()
 {
 	var temp = speed;
-	if(temp > 50)
-		temp += (temp - 50) * 3;
+//	if(temp > 50)
+//		temp += (temp - 50) * 3;
 	temp /= 50;
 	var temp2 = radius;
 	temp2 /= 10;

@@ -1,7 +1,7 @@
 #ifndef ODD_DATA_TYPES
 #define ODD_DATA_TYPES
 
-#define NUM_LEDS 5
+#define NUM_LEDS 10
 
 //Used to represent a single LED
 typedef struct {

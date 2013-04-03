@@ -34,7 +34,8 @@ void writeLed(int strength)
   Tlc.set(counter, strength * 16);
 //  Tlc.update();
   counter++;
-  
-  if(counter > 32)
+  if((counter + 1) % 16 == 0)
+    counter++;
+  if(counter > NUM_TLCS * 16)
     counter = 0;
 }
