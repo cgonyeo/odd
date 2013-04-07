@@ -4,7 +4,9 @@
 	<meta http-equiv="content-type" content="text/html; charset=utf-8" />
 	<title>Odd WebUI</title>
 	<link rel="stylesheet" type="text/css" href="../css/oddwebui.css">
+	<link rel="stylesheet" type="test/css" href="../css/jquery.mobile.flatui.css">
 	<script src="http://code.jquery.com/jquery.min.js"></script>
+	<script src="../scripts/jquery.mobile-1.3.0.min.js"></script>
 	<script>
 		var animation = 'setall';
 		var speedOn = 'n';
@@ -15,45 +17,33 @@
 	</head>
 	<body>
 		<div id=bg>
-			<div id=advButton>
-				<p id=advText>Advanced</p>
-				<a href="./oddsetall.html">
-					<span class=animLink></span>
-				</a>
-			</div>
-			<div id=backButton>
-				<p id=advText>Back</p>
-				<a href="../index.html">
-					<span class=animLink></span>
-				</a>
+			<div data-role="header">
+				<a href="../index.html" data-iconpos="notext" data-role="button" data-icon="home" title="Home">Home</a>
+				<h1 id=title>Cylon Eye</h1>
 			</div>
 			<div id=content>
 				<p id=status>Not Connected<p>
 				<span id=speed>
 					Speed:
-					<span id=Snum>50</span>
-					<input type="range" min="0" max="100" value="50" onchange="Supdate(this.value)" name="Speed"/>
+					<input type="range" min="0" max="100" value="50" onchange="Supdate(this.value)" name="Speed" data-highlight="true"/>
 				</span>
 				<span id=radius>
 					Radius:
-					<span id=RAnum>15</span>
-					<input type="range" min="0" max="30" value="15" onchange="RAupdate(this.value)" name="Radius"/>
+					<input type="range" min="0" max="30" value="15" onchange="RAupdate(this.value)" name="Radius" data-highlight="true"/>
 				</span>
 				<span id=red>
 					Red:
-					<span id=Rnum>10</span>
-					<input type="range" min="0" max="255" value="10" onchange="Rupdate(this.value)" name="Red"/>
+					<input type="range" min="0" max="255" value="10" onchange="Rupdate(this.value)" name="Red" data-highlight="true" data-theme="d"/>
 				</span>
 				<span id=green>
 					Green:
-					<span id=Gnum>10</span>
-					<input type="range" min="0" max="255" value="10" onchange="Gupdate(this.value)" name="Green"/>
+					<input type="range" min="0" max="255" value="10" onchange="Gupdate(this.value)" name="Green" data-highlight="true" data-theme="g"/>
 				</span>
 				<span id=blue>
 					Blue:
-					<span id=Bnum>10</span>
-					<input type="range" min="0" max="255" value="10" onchange="Bupdate(this.value)" name="Blue"/>
+					<input type="range" min="0" max="255" value="10" onchange="Bupdate(this.value)" name="Blue" data-highlight="true" data-theme="f"/>
 				</span>
+
 			</div>
 		</div>
 	</body>

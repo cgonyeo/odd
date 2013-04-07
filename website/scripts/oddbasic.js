@@ -71,31 +71,26 @@ function send()
 
 function RAupdate(newValue)
 {
-	document.getElementById("RAnum").innerHTML=newValue;
 	radius = newValue;
 	send();
 }
 function Supdate(newValue)
 {
-	document.getElementById("Snum").innerHTML=newValue;
 	speed = newValue;
 	send();
 }
 function Rupdate(newValue)
 {
-	document.getElementById("Rnum").innerHTML=newValue;
 	R = newValue;
 	send();
 }
 function Gupdate(newValue)
 {
-	document.getElementById("Gnum").innerHTML=newValue;
 	G = newValue;
 	send();
 }
 function Bupdate(newValue)
 {
-	document.getElementById("Bnum").innerHTML=newValue;
 	B = newValue;
 	send();
 }
