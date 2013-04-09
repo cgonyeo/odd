@@ -4,7 +4,7 @@ int counter;
 
 void setup()
 {
-  Serial.begin(57600);
+  Serial.begin(56700);
   Tlc.init();
   Tlc.setAll(100);
   delay(10);
