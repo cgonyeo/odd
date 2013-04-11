@@ -37,9 +37,9 @@ void cylonEye(double speed, double radius, double totalTime, odd_led_t* color, o
 	
 	//Calculate the center
 	if((int)time % 2 == 1)
-		center = remainder(time, 1);
+		center = odd_remainder(time, 1);
 	else
-		center = 1 - remainder(time, 1);
+		center = 1 - odd_remainder(time, 1);
 	center = sin(center);
 	center *= numLeds;
 	
@@ -87,9 +87,9 @@ void cylonEye_Linear(double speed, double radius, double totalTime, odd_led_t* c
 	
 	//Calculate the center
 	if((int)time % 2 == 1)
-		center = remainder(time, 1);
+		center = odd_remainder(time, 1);
 	else
-		center = 1 - remainder(time, 1);
+		center = 1 - odd_remainder(time, 1);
 	center *= numLeds;
 	
 	
@@ -154,9 +154,9 @@ void smoothStrobe(double speed, double radius, double totalTime, odd_led_t* colo
 	double time = totalTime * speed;
 	double power = 0;
 	if((int)time % 2 == 1)
-		power = remainder(time, 1);
+		power = odd_remainder(time, 1);
 	else
-		power = 1 - remainder(time, 1);
+		power = 1 - odd_remainder(time, 1);
 	power = pow(power, 2);
 	power *= 1.5;
 	power -= 0.5;
@@ -176,9 +176,9 @@ void sinAnimation(double speed, double radius, double totalTime, odd_led_t* colo
 	double time = totalTime * speed;
 	double power = 0;
 	if((int)time % 2 == 1)
-		power = remainder(time, 1);
+		power = odd_remainder(time, 1);
 	else
-		power = 1 - remainder(time, 1);
+		power = 1 - odd_remainder(time, 1);
 	power = sin(power);
 	for(int i = 0; i < NUM_LEDS; i++)
 	{
@@ -209,9 +209,9 @@ void dammitAnimation(double speed, double radius, double totalTime, odd_led_t* c
 	avg /= FRAMES_PER_BUFFER;
 	//printf("Average: %f\n", avg);
 
-	double r = color->R / 254;
-	double g = color->G / 254;
-	double b = color->B / 254;
+	double r = color->R / 4095;
+	double g = color->G / 4095;
+	double b = color->B / 4095;
 
 	double scale = 1;
 

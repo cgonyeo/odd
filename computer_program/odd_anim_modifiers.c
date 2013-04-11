@@ -20,16 +20,15 @@
 
 //Inverts all channels on the temp LEDS.
 //For example:
-//254 -> 0
-//0 -> 254
-//180 -> 74
+//4095 -> 0
+//0 -> 4095
 void invertTempLeds(odd_led_t* leds[NUM_LEDS], odd_led_t* tempLeds[NUM_LEDS])
 {
 	for(int i = 0; i < NUM_LEDS; i++)
 	{
-		tempLeds[i]->R = 254 - tempLeds[i]->R;
-		tempLeds[i]->G = 254 - tempLeds[i]->G;
-		tempLeds[i]->B = 254 - tempLeds[i]->B;
+		tempLeds[i]->R = 4095 - tempLeds[i]->R;
+		tempLeds[i]->G = 4095 - tempLeds[i]->G;
+		tempLeds[i]->B = 4095 - tempLeds[i]->B;
 	}
 }
 
@@ -38,18 +37,18 @@ void addLeds(odd_led_t* leds[NUM_LEDS], odd_led_t* tempLeds[NUM_LEDS])
 {
 	for(int i = 0; i < NUM_LEDS; i++)
 	{
-		if(leds[i]->R + tempLeds[i]->R > 254)
-			leds[i]->R = 254;
+		if(leds[i]->R + tempLeds[i]->R > 4095)
+			leds[i]->R = 4095;
 		else
 			leds[i]->R += tempLeds[i]->R;
 		
-		if(leds[i]->G + tempLeds[i]->G > 254)
-			leds[i]->G = 254;
+		if(leds[i]->G + tempLeds[i]->G > 4095)
+			leds[i]->G = 4095;
 		else
 			leds[i]->G += tempLeds[i]->G;
 		
-		if(leds[i]->B + tempLeds[i]->B > 254)
-			leds[i]->B = 254;
+		if(leds[i]->B + tempLeds[i]->B > 4095)
+			leds[i]->B = 4095;
 		else
 			leds[i]->B += tempLeds[i]->B;
 	}
@@ -90,18 +89,18 @@ void multiplyLeds(odd_led_t* leds[NUM_LEDS], odd_led_t* tempLeds[NUM_LEDS])
 {
 	for(int i = 0; i < NUM_LEDS; i++)
 	{
-		if(leds[i]->R * tempLeds[i]->R > 254)
-			leds[i]->R = 254;
+		if(leds[i]->R * tempLeds[i]->R > 4095)
+			leds[i]->R = 4095;
 		else
 			leds[i]->R *= tempLeds[i]->R;
 		
-		if(leds[i]->G * tempLeds[i]->G > 254)
-			leds[i]->G = 254;
+		if(leds[i]->G * tempLeds[i]->G > 4095)
+			leds[i]->G = 4095;
 		else
 			leds[i]->G *= tempLeds[i]->G;
 		
-		if(leds[i]->B * tempLeds[i]->B > 254)
-			leds[i]->B = 254;
+		if(leds[i]->B * tempLeds[i]->B > 4095)
+			leds[i]->B = 4095;
 		else
 			leds[i]->B *= tempLeds[i]->B;
 	}

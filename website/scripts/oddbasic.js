@@ -13,7 +13,7 @@ $(document).ready(function () {
 	//$("#open").click(function(evt) {
 	//evt.preventDefault();
 
-	var host = 'localhost';//$("#host").val();
+	var host = 'dgonyeoraspi.csh.rit.edu';//$("#host").val();
 	var port = '8888';//$("#port").val();
 	var uri = '/ws';//$("#uri").val();
 

@@ -1,13 +1,15 @@
+#include "tlc5940.h"
+
 #ifndef ODD_DATA_TYPES
 #define ODD_DATA_TYPES
 
-#define NUM_LEDS 10
+#define NUM_LEDS ((NUM_TLCS * 16 - NUM_TLCS) / 3)
 
 //Used to represent a single LED
 typedef struct {
-	unsigned char R;
-	unsigned char G;
-	unsigned char B;
+	int R;
+	int G;
+	int B;
 } odd_led_t;
 
 //Holds the parameters for a single animation
@@ -18,11 +20,5 @@ typedef struct {
 	double radius;
 	odd_led_t* color;
 } animation_t;
-
-/*typedef struct {
-	int frameIndex;
-	int maxFrameIndex;
-	SAMPLE *recordedSamples;
-} paTestData;*/
 
 #endif

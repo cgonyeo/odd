@@ -5,8 +5,8 @@
 #include "odd_math.h"
 
 
-//Returns the remainder of dividend / divisor
-double remainder(double dividend, int divisor) 
+//Returns the odd_remainder of dividend / divisor
+double odd_remainder(double dividend, int divisor) 
 {
 	int quotient = (int) dividend / divisor;
 	return dividend - divisor * quotient;
@@ -40,7 +40,7 @@ double formatTime(long int seconds, long int useconds)
 	long double time = seconds % 10000 + (useconds - useconds % 1000) / 1000000.0;
 	
 	if(time > 100000)
-		time = remainder(time, 100000);
+		time = odd_remainder(time, 100000);
 	
 	return time;
 }

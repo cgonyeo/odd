@@ -13,14 +13,14 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include "portaudio.h"
+#include "tlc5940.h"
 #include "odd_audio.h"
 #include "odd_data_types.h"
 #include "odd_math.h"
 #include "odd_animations.h"
 #include "odd_anim_modifiers.h"
 
-#define INCPORT 3490
-#define OUTPORT 3491
+#define INCPORT 10001
 #define MAXRCVLEN 500
 #define LISTENQ (1024)
 
@@ -54,8 +54,8 @@ animation_t* animations[50]; //All currently used animations.
 //PaStream* stream;
 
 //Writes leds to the file stream fp.
-void write_odd(FILE* fp) {
-	unsigned char end = 255;
+void write_odd(/*FILE* fp*/) {
+	/*unsigned char end = 255;
 	//printf("LED0 val: %i\n",leds[0]->R);
 	for(int i=0; i<NUM_LEDS; i++) {
 		fwrite(&((leds[i]->R)), 1, 1, fp);
@@ -65,7 +65,19 @@ void write_odd(FILE* fp) {
 		fwrite(&((leds[i]->B)), 1, 1, fp);
 		fflush(fp);
 	}
-	fwrite(&end, 1, 1, fp);
+	fwrite(&end, 1, 1, fp);*/
+	int counter = 0;
+	for(int j = 0; j < NUM_TLCS; j++)
+		for(int i = 0; i < 5; i++)
+		{
+			setLed(j * 16 + i*3, leds[i]->R);
+			counter++;
+			setLed(j * 16 + i*3+1, leds[i]->G);
+			counter++;
+			setLed(j * 16 + i*3+2, leds[i]->B);
+			counter++;
+		}
+	updateLeds();
 }
 
 //Writes the led array to the console
@@ -126,15 +138,15 @@ void *updateLoop(void *arg) {
 	(void)arg;
 	int failed = 0;
 	//Open the stream, exit if it fails
-	int fd = open(DEV, O_WRONLY);
-	if( fd == -1 ) {
-		perror("open");
-		failed = 1;
-		exit(EXIT_FAILURE);
-	}
-	FILE *fp;
-	if(!failed)
-		fp  = fdopen(fd, "w");
+	//int fd = open(DEV, O_WRONLY);
+	//if( fd == -1 ) {
+	//	perror("open");
+	//	failed = 1;
+	//	exit(EXIT_FAILURE);
+	//}
+	//FILE *fp;
+	//if(!failed)
+	//	fp  = fdopen(fd, "w");
 	
 	elapsedTime = 0;
 	totalTime = 0;
@@ -157,16 +169,18 @@ void *updateLoop(void *arg) {
 		}
 				
 		if(failed==0)
-			write_odd(fp);
+			write_odd();
 		//else
 		//	write_console();
+		printf("Frame sent\n");
+		usleep(100000);
 	}
 	resetLeds();
 	if(failed==0)
-		write_odd(fp);
+		write_odd();
 	//and we're done, close the stream.
-	if(failed==0)
-		fclose(fp);
+	//if(failed==0)
+	//	fclose(fp);
 	return NULL;
 }
 
@@ -275,7 +289,7 @@ void *networkListen(char *buffer)
 {
 	int list_s;		//Listening socket
 	int conn_s;		//connection socket
-	short int port = 3357;	//port number
+	short int port = INCPORT;	//port number
 	struct sockaddr_in servaddr;	//socket address struct
 	char* tok;		//To split off tokens from input
 	printf("Starting socket");
@@ -437,12 +451,12 @@ void *networkListen(char *buffer)
 				if(radius < 0)
 					radius = 0;
 
-				if(r > 254)
-					r = 254;
-				if(b > 254)
-					b = 254;
-				if(g > 254)
-					g = 254;
+				if(r > 4095)
+					r = 4095;
+				if(b > 4095)
+					b = 4095;
+				if(g > 4095)
+					g = 4095;
 				if(r < 0)
 					r = 0;
 				if(b < 0)
@@ -474,9 +488,9 @@ void *networkListen(char *buffer)
 					animation_modifier = multiplyLeds;
 
 				odd_led_t* color = malloc(sizeof(odd_led_t));
-				color->R = (unsigned char)r;
-				color->G = (unsigned char)g;
-				color->B = (unsigned char)b;
+				color->R = r;
+				color->G = g;
+				color->B = b;
 			
 				printf("Animation: '%s'\n",animName);
 				printf("Speed: '%f'\n",speed);
@@ -534,104 +548,25 @@ int main(void)
 	char input[255];
 	input[0] = '\0';
 
-	audioInitialization();
+	tlc5940init();
 
-	odd_led_t* color = malloc(sizeof(odd_led_t));
-	color->R = 35;
-	color->G = 5;
-	color->B = 5;
+	//audioInitialization();
 
-	addAnimation(dammitAnimation, 1, 1, color, addLeds);
+	/*odd_led_t* color = malloc(sizeof(odd_led_t));
+	color->R = 5;
+	color->G = 0;
+	color->B = 0;
 
+	addAnimation(cylonEye, 0.05, 0.5, color, addLeds);*/
+	
 	while(!done)
 	{
 		networkListen(input);
-		/*
-		printf("command > ");
-		getUserInput(input);
-		//if(!strcmp(input, "network"))
-		//	networkListen(input);
-		if(!strcmp(input,"cyloneye") || !strcmp(input, "cyloneye -l") || !strcmp(input,"strobe") || !strcmp(input,"setall") || !strcmp(input, "smoothstrobe") || !strcmp(input,"sin"))
-		{
-			double speed = -1, radius = -1;
-			int r = -1, g = -1, b = -1;
-			char modifier[20];
-			modifier[0] = '\0';
-			while(speed < 0) {
-				printf("speed > ");
-				scanf("%lf",&speed);
-				flushInput();
-			}
-			while(radius < 0) {
-				printf("radius > ");
-				scanf("%lf",&radius);
-				flushInput();
-			}
-			while(r < 0 || r > 254) {
-				printf("R > ");
-				scanf("%u",&r);
-				flushInput();
-			}
-			while(g < 0 || g > 254) {
-				printf("G > ");
-				scanf("%u",&g);
-				flushInput();
-			}
-			while(b < 0 || b > 254) {
-				printf("B > ");
-				scanf("%u",&b);
-				flushInput();
-			}
-			while(strcmp(modifier,"add") && strcmp(modifier,"subtract") && strcmp(modifier,"inversesubtract") && strcmp(modifier,"multiply")) {
-				printf("modifier > ");
-				getUserInput(modifier);
-			}
-			void(*animation_function)(double, double, double, odd_led_t*, odd_led_t *[NUM_LEDS]);
-			void(*animation_modifier)( odd_led_t* leds[NUM_LEDS], odd_led_t *[NUM_LEDS] ) = addLeds;
-			if(!strcmp(input,"cyloneye"))
-				animation_function = cylonEye;
-			if(!strcmp(input, "cyloneye -l"))
-				animation_function = cylonEye_Linear;
-			if(!strcmp(input,"strobe"))
-				animation_function = strobe;
-			if(!strcmp(input,"setall"))
-				animation_function = setAll;
-			if(!strcmp(input,"smoothstrobe"))
-				animation_function = smoothStrobe;
-			if(!strcmp(input,"sin"))
-				animation_function = sinAnimation;
-			if(!strcmp(modifier,"add"))
-				animation_modifier = addLeds;
-			if(!strcmp(modifier,"subtract"))
-				animation_modifier = subtractLeds;
-			if(!strcmp(modifier,"inversesubtract"))
-				animation_modifier = inverseSubtractLeds;
-			if(!strcmp(modifier,"multiply"))
-				animation_modifier = multiplyLeds;
-
-			odd_led_t* color = malloc(sizeof(odd_led_t));
-			color->R = (unsigned char)r;
-			color->G = (unsigned char)g;
-			color->B = (unsigned char)b;
-			
-			addAnimation(animation_function,speed,radius,color,animation_modifier); 
-		}
-		
-		if(!strcmp(input,"exit"))
-			done = 1;
-		if(!strcmp(input,"remove"))
-		{
-			int index = -1;
-			printf("index > ");
-			scanf("%d", &index);
-			flushInput();
-			removeAnimation(index);
-			
-		}*/
 	}
 	printf("Exiting...\n");
 	done = 1;
 	pthread_join(ul, NULL);
+	tlc5940cleanup();
 	audioStop();
 	for(int i = 0; i < numAnimations; i++)
 	{
