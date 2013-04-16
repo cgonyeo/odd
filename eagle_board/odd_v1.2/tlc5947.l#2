@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE eagle SYSTEM "eagle.dtd">
+<eagle version="6.2">
+<drawing>
+<settings>
+<setting alwaysvectorfont="no"/>
+<setting verticaltext="up"/>
+</settings>
+<grid distance="0.05" unitdist="inch" unit="inch" style="lines" multiple="1" display="yes" altdistance="0.025" altunitdist="inch" altunit="inch"/>
+<layers>
+<layer number="1" name="Top" color="4" fill="1" visible="yes" active="yes"/>
+<layer number="16" name="Bottom" color="1" fill="1" visible="yes" active="yes"/>
+<layer number="17" name="Pads" color="2" fill="1" visible="yes" active="yes"/>
+<layer number="18" name="Vias" color="2" fill="1" visible="yes" active="yes"/>
+<layer number="19" name="Unrouted" color="6" fill="1" visible="yes" active="yes"/>
+<layer number="20" name="Dimension" color="15" fill="1" visible="yes" active="yes"/>
+<layer number="21" name="tPlace" color="7" fill="1" visible="yes" active="yes"/>
+<layer number="22" name="bPlace" color="7" fill="1" visible="yes" active="yes"/>
+<layer number="23" name="tOrigins" color="15" fill="1" visible="yes" active="yes"/>
+<layer number="24" name="bOrigins" color="15" fill="1" visible="yes" active="yes"/>
+<layer number="25" name="tNames" color="7" fill="1" visible="yes" active="yes"/>
+<layer number="26" name="bNames" color="7" fill="1" visible="yes" active="yes"/>
+<layer number="27" name="tValues" color="7" fill="1" visible="yes" active="yes"/>
+<layer number="28" name="bValues" color="7" fill="1" visible="yes" active="yes"/>
+<layer number="29" name="tStop" color="7" fill="3" visible="no" active="yes"/>
+<layer number="30" name="bStop" color="7" fill="6" visible="no" active="yes"/>
+<layer number="31" name="tCream" color="7" fill="4" visible="no" active="yes"/>
+<layer number="32" name="bCream" color="7" fill="5" visible="no" active="yes"/>
+<layer number="33" name="tFinish" color="6" fill="3" visible="no" active="yes"/>
+<layer number="34" name="bFinish" color="6" fill="6" visible="no" active="yes"/>
+<layer number="35" name="tGlue" color="7" fill="4" visible="no" active="yes"/>
+<layer number="36" name="bGlue" color="7" fill="5" visible="no" active="yes"/>
+<layer number="37" name="tTest" color="7" fill="1" visible="no" active="yes"/>
+<layer number="38" name="bTest" color="7" fill="1" visible="no" active="yes"/>
+<layer number="39" name="tKeepout" color="4" fill="11" visible="yes" active="yes"/>
+<layer number="40" name="bKeepout" color="1" fill="11" visible="yes" active="yes"/>
+<layer number="41" name="tRestrict" color="4" fill="10" visible="yes" active="yes"/>
+<layer number="42" name="bRestrict" color="1" fill="10" visible="yes" active="yes"/>
+<layer number="43" name="vRestrict" color="2" fill="10" visible="yes" active="yes"/>
+<layer number="44" name="Drills" color="7" fill="1" visible="no" active="yes"/>
+<layer number="45" name="Holes" color="7" fill="1" visible="no" active="yes"/>
+<layer number="46" name="Milling" color="3" fill="1" visible="no" active="yes"/>
+<layer number="47" name="Measures" color="7" fill="1" visible="no" active="yes"/>
+<layer number="48" name="Document" color="7" fill="1" visible="yes" active="yes"/>
+<layer number="49" name="Reference" color="7" fill="1" visible="yes" active="yes"/>
+<layer number="51" name="tDocu" color="7" fill="1" visible="yes" active="yes"/>
+<layer number="52" name="bDocu" color="7" fill="1" visible="yes" active="yes"/>
+<layer number="91" name="Nets" color="2" fill="1" visible="yes" active="yes"/>
+<layer number="92" name="Busses" color="1" fill="1" visible="yes" active="yes"/>
+<layer number="93" name="Pins" color="2" fill="1" visible="yes" active="yes"/>
+<layer number="94" name="Symbols" color="4" fill="1" visible="yes" active="yes"/>
+<layer number="95" name="Names" color="7" fill="1" visible="yes" active="yes"/>
+<layer number="96" name="Values" color="7" fill="1" visible="yes" active="yes"/>
+<layer number="97" name="Info" color="7" fill="1" visible="yes" active="yes"/>
+<layer number="98" name="Guide" color="6" fill="1" visible="yes" active="yes"/>
+</layers>
+<library>
+<packages>
+<package name="32_SMD">
+<smd name="GND" x="-5.2" y="-4.2" dx="1.15" dy="0.25" layer="1" rot="R90"/>
+<smd name="BLANK" x="-4.55" y="-4.2" dx="1.15" dy="0.25" layer="1" rot="R90"/>
+<smd name="SCLK" x="-3.9" y="-4.2" dx="1.15" dy="0.25" layer="1" rot="R90"/>
+<smd name="SIN" x="-3.25" y="-4.2" dx="1.15" dy="0.25" layer="1" rot="R90"/>
+<smd name="OUT0" x="-2.6" y="-4.2" dx="1.15" dy="0.25" layer="1" rot="R90"/>
+<smd name="OUT1" x="-1.95" y="-4.2" dx="1.15" dy="0.25" layer="1" rot="R90"/>
+<smd name="OUT2" x="-1.3" y="-4.2" dx="1.15" dy="0.25" layer="1" rot="R90"/>
+<smd name="OUT4" x="0" y="-4.2" dx="1.15" dy="0.25" layer="1" rot="R90"/>
+<smd name="OUT3" x="-0.65" y="-4.2" dx="1.15" dy="0.25" layer="1" rot="R90"/>
+<smd name="OUT5" x="0.65" y="-4.2" dx="1.15" dy="0.25" layer="1" rot="R90"/>
+<smd name="OUT6" x="1.3" y="-4.2" dx="1.15" dy="0.25" layer="1" rot="R90"/>
+<smd name="OUT7" x="1.95" y="-4.2" dx="1.15" dy="0.25" layer="1" rot="R90"/>
+<smd name="OUT8" x="2.6" y="-4.2" dx="1.15" dy="0.25" layer="1" rot="R90"/>
+<smd name="OUT9" x="3.25" y="-4.2" dx="1.15" dy="0.25" layer="1" rot="R90"/>
+<smd name="OUT10" x="3.9" y="-4.2" dx="1.15" dy="0.25" layer="1" rot="R90"/>
+<smd name="OUT11" x="4.55" y="-4.2" dx="1.15" dy="0.25" layer="1" rot="R90"/>
+<smd name="IREF" x="-4.55" y="4.2" dx="1.15" dy="0.25" layer="1" rot="R90"/>
+<smd name="XLAT" x="-3.9" y="4.2" dx="1.15" dy="0.25" layer="1" rot="R90"/>
+<smd name="SOUT" x="-3.25" y="4.2" dx="1.15" dy="0.25" layer="1" rot="R90"/>
+<smd name="OUT23" x="-2.6" y="4.2" dx="1.15" dy="0.25" layer="1" rot="R90"/>
+<smd name="OUT22" x="-1.95" y="4.2" dx="1.15" dy="0.25" layer="1" rot="R90"/>
+<smd name="OUT21" x="-1.3" y="4.2" dx="1.15" dy="0.25" layer="1" rot="R90"/>
+<smd name="OUT20" x="-0.65" y="4.2" dx="1.15" dy="0.25" layer="1" rot="R90"/>
+<smd name="OUT19" x="0" y="4.2" dx="1.15" dy="0.25" layer="1" rot="R90"/>
+<smd name="OUT18" x="0.65" y="4.2" dx="1.15" dy="0.25" layer="1" rot="R90"/>
+<smd name="OUT17" x="1.3" y="4.2" dx="1.15" dy="0.25" layer="1" rot="R90"/>
+<smd name="OUT16" x="1.95" y="4.2" dx="1.15" dy="0.25" layer="1" rot="R90"/>
+<smd name="OUT15" x="2.6" y="4.2" dx="1.15" dy="0.25" layer="1" rot="R90"/>
+<smd name="OUT14" x="3.25" y="4.2" dx="1.15" dy="0.25" layer="1" rot="R90"/>
+<smd name="OUT13" x="3.9" y="4.2" dx="1.15" dy="0.25" layer="1" rot="R90"/>
+<smd name="OUT12" x="4.55" y="4.2" dx="1.15" dy="0.25" layer="1" rot="R90"/>
+<smd name="VCC" x="-5.2" y="4.2" dx="1.15" dy="0.25" layer="1" rot="R90"/>
+<wire x1="-5.825" y1="-4.02" x2="5.175" y2="-4.02" width="0.127" layer="21"/>
+<wire x1="5.175" y1="-4.02" x2="5.175" y2="4.02" width="0.127" layer="21"/>
+<wire x1="5.175" y1="4.02" x2="-5.825" y2="4.02" width="0.127" layer="21"/>
+<wire x1="-5.825" y1="4.02" x2="-5.825" y2="-4.02" width="0.127" layer="21"/>
+<smd name="THML" x="0" y="0" dx="4.63" dy="4.11" layer="1"/>
+<pad name="THML_HOLE" x="0" y="0" drill="1.2" shape="square"/>
+<circle x="-4.55" y="-2.6" radius="0.65" width="0.127" layer="21"/>
+<text x="-5.85" y="5.2" size="1.27" layer="25">&gt;NAME</text>
+<text x="-5.85" y="-6.5" size="1.27" layer="27">&gt;Value</text>
+</package>
+</packages>
+<symbols>
+<symbol name="TLC5947">
+<wire x1="-22.86" y1="7.62" x2="20.32" y2="7.62" width="0.254" layer="94"/>
+<wire x1="20.32" y1="7.62" x2="20.32" y2="-7.62" width="0.254" layer="94"/>
+<wire x1="20.32" y1="-7.62" x2="-22.86" y2="-7.62" width="0.254" layer="94"/>
+<wire x1="-22.86" y1="-7.62" x2="-22.86" y2="7.62" width="0.254" layer="94"/>
+<pin name="GND" x="-20.32" y="-12.7" length="middle" rot="R90"/>
+<pin name="BLANK" x="-17.78" y="-12.7" length="middle" rot="R90"/>
+<pin name="SCLK" x="-15.24" y="-12.7" length="middle" rot="R90"/>
+<pin name="SIN" x="-12.7" y="-12.7" length="middle" rot="R90"/>
+<pin name="OUT0" x="-10.16" y="-12.7" length="middle" rot="R90"/>
+<pin name="OUT1" x="-7.62" y="-12.7" length="middle" rot="R90"/>
+<pin name="OUT2" x="-5.08" y="-12.7" length="middle" rot="R90"/>
+<pin name="OUT3" x="-2.54" y="-12.7" length="middle" rot="R90"/>
+<pin name="OUT4" x="0" y="-12.7" length="middle" rot="R90"/>
+<pin name="OUT5" x="2.54" y="-12.7" length="middle" rot="R90"/>
+<pin name="OUT6" x="5.08" y="-12.7" length="middle" rot="R90"/>
+<pin name="OUT7" x="7.62" y="-12.7" length="middle" rot="R90"/>
+<pin name="OUT8\" x="10.16" y="-12.7" length="middle" rot="R90"/>
+<pin name="OUT9" x="12.7" y="-12.7" length="middle" rot="R90"/>
+<pin name="OUT10" x="15.24" y="-12.7" length="middle" rot="R90"/>
+<pin name="OUT11" x="17.78" y="-12.7" length="middle" rot="R90"/>
+<pin name="OUT12" x="17.78" y="12.7" length="middle" rot="R270"/>
+<pin name="OUT13" x="15.24" y="12.7" length="middle" rot="R270"/>
+<pin name="OUT14" x="12.7" y="12.7" length="middle" rot="R270"/>
+<pin name="OUT15" x="10.16" y="12.7" length="middle" rot="R270"/>
+<pin name="OUT16" x="7.62" y="12.7" length="middle" rot="R270"/>
+<pin name="OUT17" x="5.08" y="12.7" length="middle" rot="R270"/>
+<pin name="OUT18" x="2.54" y="12.7" length="middle" rot="R270"/>
+<pin name="OUT19" x="0" y="12.7" length="middle" rot="R270"/>
+<pin name="OUT20" x="-2.54" y="12.7" length="middle" rot="R270"/>
+<pin name="OUT21" x="-5.08" y="12.7" length="middle" rot="R270"/>
+<pin name="OUT22" x="-7.62" y="12.7" length="middle" rot="R270"/>
+<pin name="OUT23" x="-10.16" y="12.7" length="middle" rot="R270"/>
+<pin name="SOUT" x="-12.7" y="12.7" length="middle" rot="R270"/>
+<pin name="XLAT" x="-15.24" y="12.7" length="middle" rot="R270"/>
+<pin name="IREF" x="-17.78" y="12.7" length="middle" rot="R270"/>
+<pin name="VCC" x="-20.32" y="12.7" length="middle" rot="R270"/>
+<pin name="THML" x="-27.94" y="0" length="middle"/>
+</symbol>
+</symbols>
+<devicesets>
+<deviceset name="TLC5947">
+<gates>
+<gate name="G$1" symbol="TLC5947" x="0" y="0"/>
+</gates>
+<devices>
+<device name="" package="32_SMD">
+<connects>
+<connect gate="G$1" pin="BLANK" pad="BLANK"/>
+<connect gate="G$1" pin="GND" pad="GND"/>
+<connect gate="G$1" pin="IREF" pad="IREF"/>
+<connect gate="G$1" pin="OUT0" pad="OUT0"/>
+<connect gate="G$1" pin="OUT1" pad="OUT1"/>
+<connect gate="G$1" pin="OUT10" pad="OUT10"/>
+<connect gate="G$1" pin="OUT11" pad="OUT11"/>
+<connect gate="G$1" pin="OUT12" pad="OUT12"/>
+<connect gate="G$1" pin="OUT13" pad="OUT13"/>
+<connect gate="G$1" pin="OUT14" pad="OUT14"/>
+<connect gate="G$1" pin="OUT15" pad="OUT15"/>
+<connect gate="G$1" pin="OUT16" pad="OUT16"/>
+<connect gate="G$1" pin="OUT17" pad="OUT17"/>
+<connect gate="G$1" pin="OUT18" pad="OUT18"/>
+<connect gate="G$1" pin="OUT19" pad="OUT19"/>
+<connect gate="G$1" pin="OUT2" pad="OUT2"/>
+<connect gate="G$1" pin="OUT20" pad="OUT20"/>
+<connect gate="G$1" pin="OUT21" pad="OUT21"/>
+<connect gate="G$1" pin="OUT22" pad="OUT22"/>
+<connect gate="G$1" pin="OUT23" pad="OUT23"/>
+<connect gate="G$1" pin="OUT3" pad="OUT3"/>
+<connect gate="G$1" pin="OUT4" pad="OUT4"/>
+<connect gate="G$1" pin="OUT5" pad="OUT5"/>
+<connect gate="G$1" pin="OUT6" pad="OUT6"/>
+<connect gate="G$1" pin="OUT7" pad="OUT7"/>
+<connect gate="G$1" pin="OUT8\" pad="OUT8"/>
+<connect gate="G$1" pin="OUT9" pad="OUT9"/>
+</connects>
+<technologies>
+<technology name=""/>
+</technologies>
+</device>
+</devices>
+</deviceset>
+</devicesets>
+</library>
+</drawing>
+</eagle>
