@@ -82,7 +82,7 @@ void *tlcUpdateLoop(void *arg)
 			digitalWrite(BLANK, 0);
 			xlat_needed = 0;
 		}*/
-		usleep(4096 * 100);
+		usleep(2000);
 		pwmWrite(GSCLK, PWM_OFF);
 		pulsePin(BLANK);
 		pwmWrite(GSCLK, PWM_ON);

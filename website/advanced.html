@@ -1,0 +1,68 @@
+<!DOCTYPE HTML>
+<html>
+	<head>
+	<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+	<title>Odd WebUI</title>
+	<link rel="stylesheet" type="test/css" href="css/bootstrap.css">
+	<link rel="stylesheet" type="test/css" href="css/flat-ui.css">
+	<link rel="stylesheet" type="text/css" href="./css/oddadvanced.css">
+	<script src="http://code.jquery.com/jquery.min.js"></script>
+	<script type="text/javascript" src="./scripts/oddadvanced.js"></script>	
+	</head>
+	<body>
+		<div id=page>
+			<div id=leftPane>
+				<h1 id=pageTitle>Project ODD</h1>
+				<h2 id=basicLink><a href="index.html">Basic</a></h2>
+			</div>
+			<div id=centerPane>
+				<div id=animationList>
+					<div id=firstAnimation class=animation>
+						<div class="animNameDiv inputField" data-role=fieldcontain>
+							<label for="animationName">Animation Name:</label>
+							<select name="animationName" style="width:120px;">
+								<option value="setall">Set All</option>
+								<option value="strobe">Strobe</option>
+								<option value="pulse">Pulse</option>
+								<option value="cyloneye">Cylon Eye</option>
+							</select>
+						</div>
+						<div class="speedDiv inputField" data-role=fieldcontain>
+							<label for="speed">Speed:</label>
+							<input type="text" name="speed" value="1" style="width:30px;"/>
+						</div>
+						<div class="radiusDiv inputField" data-role=fieldcontain>
+							<label for="radius">Radius:</label>
+							<input type="text" name="radius" value="1" style="width:30px;"/>
+						</div>
+						<div class="redDiv inputField" data-role=fieldcontain>
+							<label for="red">Red:</label>
+							<input type="text" name="red" value="0" style="width:30px;"/>
+						</div>
+						<div class="greenDiv inputField" data-role=fieldcontain>
+							<label for="green">Green:</label>
+							<input type="text" name="green" value="0" style="width:30px;"/>
+						</div>
+						<div class="blueDiv inputField" data-role=fieldcontain>
+							<label for="blue">Blue:</label>
+							<input type="text" name="blue" value="0" style="width:30px;"/>
+						</div>
+						<div class="animModDiv inputField" data-role=fieldcontain>
+							<label for="animationModifier">Animation Modifier:</label>
+							<select name="animationModifier" style="width:120px;">
+								<option value="setall">Add</option>
+								<option value="strobe">Subtract</option>
+							</select>
+						</div>
+						<div class="ximg inputField">
+							<img src="css/images/x.png"/>
+						</div>
+					</div>
+				</div>
+				<div id="addButtonDiv">
+					<img src="css/images/+.png" id="addButton"/>
+				</div>
+			</div>
+		</div>
+	</body>
+</html>

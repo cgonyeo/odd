@@ -21,9 +21,16 @@ var G = 10;
 var B = 10;
 var modifier;
 
+var animationsAvailable = ["setall","smoothstrobe","strobe","cyloneye"];
+var modifiersAvailable = ["add","subtract"];
+
 $(document).ready(function () {
+	$('#addButton').click(function() {
+		displayNewAnimation("setall", 1, 1, 0, 0, 0, "add");
+	});
+});
 	//Host is currently hardcoded to the PI I'm using
-	var host = 'dgonyeoraspi.csh.rit.edu';
+/*	var host = 'dgonyeoraspi.csh.rit.edu';
 	var port = '8888';
 	var uri = '/ws';
 
@@ -59,81 +66,40 @@ $(document).ready(function () {
 		temp2 /= 10;
 		ws.send("stop !" + animation + " " + temp + " " + temp2 + " " + R + " " + G + " " + B + " " + modifier + " !");
 		*/
-	};
+	/*};
 
 });
+*/
 
-$(document).delegate('#setall', 'pageshow', function() {
-	animation = 'setall';
-	speed = 50;
-	radius = 15;
-	R = 10;
-	G = 10;
-	B = 10;
-	modifier = 'add';
+function isNumber(possiblyANum)
+{
+	return ! isNaN (possiblyANum-0) && possiblyANum !== null && possiblyANum !== "" && possiblyANum !== false;
+}
 
-	var temp = speed;
-	if(temp > 50)
-		temp += (temp - 50) * 3;
-	temp /= 50;
-	var temp2 = radius;
-	temp2 /= 10;
-	ws.send("stop !" + animation + " " + temp + " " + temp2 + " " + R + " " + G + " " + B + " " + modifier + " !");
-});
+function displayNewAnimation(animationName, speed, radius, red, green, blue, animationModifier)
+{
+	if(isNumber(speed) && isNumber(radius) && isNumber(red) && isNumber(green) && isNumber(blue) && $.inArray(animationName, animationsAvailable) > -1 && $.inArray(animationModifier, modifiersAvailable) > -1)
+	{
+		
+		 var temp = $('#firstAnimation').clone();
+		 $(temp).removeAttr("id");
+		 $(temp).appendTo('#animationList');
 
-$(document).delegate('#pulse', 'pageshow', function() {
-	animation = 'smoothstrobe';
-	speed = 50;
-	radius = 15;
-	R = 10;
-	G = 10;
-	B = 10;
-	modifier = 'add';
+		/*var animationList = $('#animationList').children;
+		var animationParts = animationList[0].children;
+		animationParts[animationParts.length - 1].click(function() {
+			$(this).parent.remove();
+		});*/
+		var animations = document.querySelectorAll('.animation');
+		var lastAnim = animations[animations.length - 1];
+		var X = lastAnim.querySelectorAll('.ximg')[0];
+		console.log($(X).parent());
 
-	var temp = speed;
-	if(temp > 50)
-		temp += (temp - 50) * 3;
-	temp /= 50;
-	var temp2 = radius;
-	temp2 /= 10;
-	ws.send("stop !" + animation + " " + temp + " " + temp2 + " " + R + " " + G + " " + B + " " + modifier + " !");
-});
-
-$(document).delegate('#strobe', 'pageshow', function() {
-	animation = 'strobe';
-	speed = 50;
-	radius = 15;
-	R = 10;
-	G = 10;
-	B = 10;
-	modifier = 'add';
-
-	var temp = speed;
-	if(temp > 50)
-		temp += (temp - 50) * 3;
-	temp /= 50;
-	var temp2 = radius;
-	temp2 /= 10;
-	ws.send("stop !" + animation + " " + temp + " " + temp2 + " " + R + " " + G + " " + B + " " + modifier + " !");
-});
-
-$(document).delegate('#cyloneye', 'pageshow', function() {
-	animation = 'cyloneye';
-	speed = 50;
-	radius = 15;
-	R = 10;
-	G = 10;
-	B = 10;
-	modifier = 'add';
-
-	var temp = speed;
-	if(temp > 50)
-		temp += (temp - 50) * 3;
-	temp /= 50;
-	var temp2 = radius;
-	temp2 /= 10;
-	ws.send("stop !" + animation + " " + temp + " " + temp2 + " " + R + " " + G + " " + B + " " + modifier + " !");
-});
+		$(X).click(function() {
+			$(this).parent().remove();
+		});
+	}
+}
 
 //Sends an updated animation to the server
 function send()
@@ -146,35 +112,4 @@ function send()
 	temp2 /= 10;
 	if(connected)
 		ws.send("update " + temp + " " + temp2 + " " + R + " " + G + " " + B + " 0 !");
-}
-
-//Radius slider has changed.
-function RAupdate(newValue)
-{
-	radius = newValue;
-	send();
-}
-//Speed slider has changed.
-function Supdate(newValue)
-{
-	speed = newValue;
-	send();
-}
-//Red slider has changed.
-function Rupdate(newValue)
-{
-	R = newValue;
-	send();
-}
-//Green slider has changed.
-function Gupdate(newValue)
-{
-	G = newValue;
-	send();
-}
-//Blue slider has changed.
-function Bupdate(newValue)
-{
-	B = newValue;
-	send();
 }

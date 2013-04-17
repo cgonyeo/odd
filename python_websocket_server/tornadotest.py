@@ -6,14 +6,14 @@ import socket
 import sys
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-server_address = ('localhost', 3357)
-print 'connecting to localhost at port 3357...'
+server_address = ('127.0.0.1', 10001)
+print 'connecting to localhost at port 10001...'
 sock.connect(server_address)
+print 'connected'
 
 class WSHandler(tornado.websocket.WebSocketHandler):
 	def open(self):
 		print 'new connection';
-		self.write_message('Hello, World!');
 	
 	def on_message(self, message):
 		print 'Message received: %s\n' % message
@@ -33,9 +33,13 @@ class WSHandler(tornado.websocket.WebSocketHandler):
 
 application = tornado.web.Application([
 	(r'/ws', WSHandler)
-])
+], debug=True)
 
 if  __name__ == "__main__":
+	print "Starting Tornado server"
 	http_server = tornado.httpserver.HTTPServer(application)
-	http_server.listen(8888)
+	print "Tornado server initialized"
+	http_server.listen(8888, '0.0.0.0')
+	print "Tornado server listening"
 	tornado.ioloop.IOLoop.instance().start()
+	print "Tornado server started"

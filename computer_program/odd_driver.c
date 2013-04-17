@@ -172,8 +172,7 @@ void *updateLoop(void *arg) {
 			write_odd();
 		//else
 		//	write_console();
-		printf("Frame sent\n");
-		usleep(100000);
+		usleep(500);
 	}
 	resetLeds();
 	if(failed==0)
@@ -292,7 +291,7 @@ void *networkListen(char *buffer)
 	short int port = INCPORT;	//port number
 	struct sockaddr_in servaddr;	//socket address struct
 	char* tok;		//To split off tokens from input
-	printf("Starting socket");
+	printf("Starting socket\n");
 	if((list_s = socket(AF_INET, SOCK_STREAM, 0)) < 0) 
 	{
 		printf("Error making listening socket\n");
@@ -379,7 +378,7 @@ void *networkListen(char *buffer)
 				for(int i = numAnimations; i > 0; i--)
 					removeAnimation(0);
 			}
-			else if(!strcmp(line,"sup?"))
+			else if(!strcmp(line,"sup"))
 			{
 				char *reply;
 				char *temp;
@@ -414,6 +413,7 @@ void *networkListen(char *buffer)
 						printf("Error writing\n");
 						exit(EXIT_FAILURE);
 					}*/
+				printf("%s\n", reply);
 			}
 			else
 			{

@@ -1,0 +1,50 @@
+#centerPane
+{
+	background-color:#dcdcdc;
+	margin-left:15%;
+}
+
+#leftPane
+{
+	position:absolute;
+	display:inline-block;
+	width:15%;
+}
+
+.inputField
+{
+	float:left;
+	margin:10px;
+}
+
+.animation
+{
+	clear:both;
+	width:100%;
+	height:auto;
+	overflow:hidden;
+	display:inline-block;
+}
+
+.animation:first-child {
+	display:none;
+}
+
+#addButtonDiv
+{
+	clear:both;
+	margin-left:auto;
+	margin-right:auto;
+	width:80px;
+}
+
+#animationList
+{
+	clear:both;
+	width:auto;
+	height:auto;
+	margin-right:auto;
+	margin-left:auto;
+	overflow:hidden;
+	display:inline-block;
+}
