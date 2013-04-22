@@ -42,7 +42,16 @@ $(document).ready(function () {
 
 	//We will eventually receive updates from the server
 	ws.onmessage = function(evt) {
-		alert(evt.data);
+		if(evt.data != "Not much, you?")
+		{
+			var tokens = evt.data.split(/ |!/);
+			console.log(tokens);
+			for(var i = 0; i < tokens.length; i+= 8)
+			{
+				console.log("New anim: " +tokens[i]+" "+tokens[i+1]+" "+tokens[i+2]+" "+tokens[i+3]+" "+tokens[i+4]+" "+tokens[i+5]+" "+tokens[i+6]);
+				displayNewAnimation(tokens[i], tokens[i+1], tokens[i+2], tokens[i+3], tokens[i+4], tokens[i+5], tokens[i+6]);
+			}
+		}
 	};
 
 	//Alert the user if we disconnect
@@ -61,7 +70,7 @@ $(document).ready(function () {
 		for(var i = 0; i < statii.length; i++)
 			statii[i].innerHTML="Connected";
 		
-		ws.send("stop !");
+		ws.send("sup !");
 	};
 });
 
@@ -119,9 +128,9 @@ function isNumber(possiblyANum)
 	return ! isNaN (possiblyANum-0) && possiblyANum !== null && possiblyANum !== "" && possiblyANum !== false;
 }
 
-function displayNewAnimation(animationName, speed, radius, red, green, blue, animationModifier)
+function displayNewAnimation(animationName, newSpeed, newRadius, red, green, blue, animationModifier)
 {
-	if(isNumber(speed) && isNumber(radius) && isNumber(red) && isNumber(green) && isNumber(blue) && $.inArray(animationName, animationsAvailable) > -1 && $.inArray(animationModifier, modifiersAvailable) > -1)
+	if(isNumber(newSpeed) && isNumber(newRadius) && isNumber(red) && isNumber(green) && isNumber(blue) && $.inArray(animationName, animationsAvailable) > -1 && $.inArray(animationModifier, modifiersAvailable) > -1)
 	{
 		var temp = $('#firstAnimation').clone();
 		$(temp).removeAttr("id");
@@ -129,8 +138,58 @@ function displayNewAnimation(animationName, speed, radius, red, green, blue, ani
 
 		var animations = document.querySelectorAll('.animation');
 		var lastAnim = animations[animations.length - 1];
-		var X = lastAnim.querySelectorAll('.ximg')[0];
 
+		var animSelector = lastAnim.querySelectorAll('.animNameSelector')[0];
+		switch(animationName)
+		{
+			case "setall":
+				animSelector.selectedIndex = 0;
+				break;
+			case "strobe":
+				animSelector.selectedIndex = 1;
+				animName = "strobe";
+				break;
+			case "strobestrobe":
+				animSelector.selectedIndex = 2;
+				animName = "smoothstrobe";
+				break;
+			case "cyloneye":
+				animSelector.selectedIndex = 3;
+				animName = "cyloneye";
+				break;
+		}
+		console.log("Anim selector: " + animSelector);
+
+		var newSpeedInput = lastAnim.querySelectorAll('.speed')[0];
+		newSpeedInput.value = newSpeed;
+		console.log("Speed input: " + newSpeedInput);
+		var newRadiusInput = lastAnim.querySelectorAll('.radius')[0];
+		newRadiusInput.value = newRadius;
+		console.log("Radius input: " + newRadiusInput);
+		var redInput = lastAnim.querySelectorAll('.red')[0];
+		redInput.value = red;
+		console.log("Red input: " + redInput);
+		var greenInput = lastAnim.querySelectorAll('.green')[0];
+		greenInput.value = green;
+		console.log("Green input: " + greenInput);
+		var blueInput = lastAnim.querySelectorAll('.blue')[0];
+		blueInput.value = blue;
+		console.log("blue input: " + blueInput);
+
+		var animModSelector = lastAnim.querySelectorAll('.animModSelector')[0];
+		switch(animationName)
+		{
+			case "add":
+				animModSelector.selectedIndex = 0;
+				break;
+			case "subtract":
+				animModSelector.selectedIndex = 1;
+				animName = "strobe";
+				break;
+		}
+		console.log("AnimMod selector: " + animModSelector);
+
+		var X = lastAnim.querySelectorAll('.ximg')[0];
 		$(X).click(function() {
 			$(this).parent().remove();
 		});

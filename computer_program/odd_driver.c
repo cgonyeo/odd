@@ -587,14 +587,14 @@ int main(void)
 
 	tlc5940init();
 
-	audioInitialization();
+	/*audioInitialization();
 
 	odd_led_t* color = malloc(sizeof(odd_led_t));
 	color->R = 5;
 	color->G = 0;
 	color->B = 0;
 
-	addAnimation(dammitAnimation, 0.05, 0.5, color, addLeds);
+	addAnimation(dammitAnimation, 0.05, 0.5, color, addLeds);*/
 	
 	while(!done)
 	{
