@@ -354,6 +354,11 @@ void *networkListen(char *buffer)
 			printf("Tok: %s\n", tok);
 			if(!strcmp(line,"exit"))
 			{
+				if(write(conn_s, "ok", 2) < 0)
+				{
+					printf("Error writing\n");
+					exit(EXIT_FAILURE);
+				}
 				done = 1;
 				printf("Closing the connection\n");
 
@@ -365,27 +370,46 @@ void *networkListen(char *buffer)
 			}
 			else if(!strcmp(line,"remove"))
 			{
+				if(write(conn_s, "ok", 2) < 0)
+				{
+					printf("Error writing\n");
+					exit(EXIT_FAILURE);
+				}
 				char* tmp = strchr(tok, ' ');
 				*tmp = '\0';
 				removeAnimation(atoi(tok));
 			}
 			else if(!strcmp(line,"time"))
 			{
+				if(write(conn_s, "ok", 2) < 0)
+				{
+					printf("Error writing\n");
+					exit(EXIT_FAILURE);
+				}
 				printf("Time: %Lf\n", totalTime);
 			}
 			else if(!strcmp(line,"stop"))
 			{
+				if(write(conn_s, "ok", 2) < 0)
+				{
+					printf("Error writing\n");
+					exit(EXIT_FAILURE);
+				}
 				for(int i = numAnimations; i > 0; i--)
 					removeAnimation(0);
 			}
 			else if(!strcmp(line,"sup"))
 			{
-				char *reply;
+				printf("Sup received\n");
+				char reply[4096];
+				reply[0] = '\0';
 				char *temp;
 				char *temp2;
 				if(numAnimations != 0)
+				{
 					for(int i = 0; i < numAnimations; i++)
 					{
+						printf("Processing animation %i\n", i);
 						if(animations[i]->function == setAll)
 							temp = "setall";
 						else if(animations[i]->function == strobe)
@@ -396,27 +420,42 @@ void *networkListen(char *buffer)
 							temp = "cyloneye";
 						else if(animations[i]->function == sinAnimation)
 							temp = "sinanimation";
-
 						if(animations[i]->modifier == addLeds)
 							temp2 = "add";
-						if(animations[i]->modifier == subtractLeds)
+						else if(animations[i]->modifier == subtractLeds)
 							temp2 = "subtract";
-						if(animations[i]->modifier == multiplyLeds)
+						else if(animations[i]->modifier == multiplyLeds)
 							temp2 = "multiply";
 
-						snprintf(reply, sizeof(reply), "%s%s %f %f %i %i %i %s !", reply, temp, animations[i]->speed, animations[i]->radius, animations[i]->color->R, animations[i]->color->G, animations[i]->color->B, temp2);
+						sprintf(reply, "%s%s %f %f %i %i %i %s !", reply, temp, animations[i]->speed, animations[i]->radius, animations[i]->color->R, animations[i]->color->G, animations[i]->color->B, temp2);
+						
 					}
-				else
-					strcpy(reply,"Not much, you?");
-					/*if(write(conn_s, reply, strlen(reply)) < 0)
+
+					printf("Sending:%s\n", reply);
+
+					if(write(conn_s, reply, strlen(reply)) < 0)
 					{
 						printf("Error writing\n");
 						exit(EXIT_FAILURE);
-					}*/
-				printf("%s\n", reply);
+					}
+
+					printf("Animation sent.\n");
+				}
+				else
+					if(write(conn_s, "Not much, you?", 14) < 0)
+					{
+						printf("Error writing\n");
+						exit(EXIT_FAILURE);
+					}
 			}
 			else
 			{
+				if(write(conn_s, "ok", 2) < 0)
+				{
+					printf("Error writing\n");
+					exit(EXIT_FAILURE);
+				}
+				
 				char* animName = line;
 
 				char* speedc = tok;//strchr(animName,' ');
@@ -515,11 +554,9 @@ void *networkListen(char *buffer)
 			printf("New line: %s\n", line);
 			printf("Buffer: %s\n", buffer);*/
 			line = temp;
-			printf("Line processing done.\n1: '%s'\n",line);
 			temp = strchr(buffer, '!');
 			if(temp != NULL)
 				*temp++ = '\0';
-			printf("2: '%s'\n",line);
 		}
 	}
 	
@@ -550,14 +587,14 @@ int main(void)
 
 	tlc5940init();
 
-	//audioInitialization();
+	audioInitialization();
 
-	/*odd_led_t* color = malloc(sizeof(odd_led_t));
+	odd_led_t* color = malloc(sizeof(odd_led_t));
 	color->R = 5;
 	color->G = 0;
 	color->B = 0;
 
-	addAnimation(cylonEye, 0.05, 0.5, color, addLeds);*/
+	addAnimation(dammitAnimation, 0.05, 0.5, color, addLeds);
 	
 	while(!done)
 	{

@@ -46,6 +46,16 @@ void audioInitialization()
 		printf("Error calling PaInitialize (line 198)\n");
 		exit(EXIT_FAILURE);
 	}
+	
+	printf("Getting devices...\n");
+	const PaDeviceInfo *deviceInfo;
+	int numDevices = Pa_GetDeviceCount();
+	printf("%i devices found\n", numDevices);
+	for(int i = 0; i < numDevices; i++)
+	{
+		deviceInfo = Pa_GetDeviceInfo(i);
+		printf("Device: %s\n", deviceInfo->name);
+	}
 
 	inputParameters.device = Pa_GetDefaultInputDevice();
 	if(inputParameters.device == paNoDevice)

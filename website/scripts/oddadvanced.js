@@ -28,9 +28,13 @@ $(document).ready(function () {
 	$('#addButton').click(function() {
 		displayNewAnimation("setall", 1, 1, 0, 0, 0, "add");
 	});
-});
+	
+	$('#applyButton').click(function() {
+		sendUpdate();
+	});
+	
 	//Host is currently hardcoded to the PI I'm using
-/*	var host = 'dgonyeoraspi.csh.rit.edu';
+	var host = 'dgonyeoraspi.csh.rit.edu';
 	var port = '8888';
 	var uri = '/ws';
 
@@ -38,7 +42,7 @@ $(document).ready(function () {
 
 	//We will eventually receive updates from the server
 	ws.onmessage = function(evt) {
-	//	alert("message received: " + evt.data)
+		alert(evt.data);
 	};
 
 	//Alert the user if we disconnect
@@ -56,20 +60,59 @@ $(document).ready(function () {
 		statii = document.getElementsByClassName("status")
 		for(var i = 0; i < statii.length; i++)
 			statii[i].innerHTML="Connected";
-	
-		/*
-		var temp = speed;
-		if(temp > 50)
-			temp += (temp - 50) * 3;
-		temp /= 50;
-		var temp2 = radius;
-		temp2 /= 10;
-		ws.send("stop !" + animation + " " + temp + " " + temp2 + " " + R + " " + G + " " + B + " " + modifier + " !");
-		*/
-	/*};
-
+		
+		ws.send("stop !");
+	};
 });
-*/
+
+function sendUpdate()
+{
+	ws.send("stop !");
+
+	var animations = document.querySelectorAll('.animation');
+	for(var i = 1; i < animations.length; i++)
+	{
+		animSettings = $(animations[i]).children();
+		var nameIndex = $(animSettings[0]).children()[1].selectedIndex;
+		var animName = "no animation";
+		switch(nameIndex)
+		{
+			case 0:
+				animName = "setall";
+				break;
+			case 1:
+				animName = "strobe";
+				break;
+			case 2:
+				animName = "smoothstrobe";
+				break;
+			case 3:
+				animName = "cyloneye";
+				break;
+		}
+		
+		var speedVal = $(animSettings[1]).children()[1].value;
+		var radiusVal = $(animSettings[2]).children()[1].value;
+		var redVal = $(animSettings[3]).children()[1].value;
+		var greenVal = $(animSettings[4]).children()[1].value;
+		var blueVal = $(animSettings[5]).children()[1].value;
+
+		var modifierIndex = $(animSettings[6]).children()[1].selectedIndex;
+		var modifierName = "no modifier";
+		switch(modifierIndex)
+		{
+			case 0:
+				modifierName = "add";
+				break;
+			case 1:
+				modifierName = "subtract";
+				break;
+		}
+
+		var animationString = animName + " " + speedVal + " " + radiusVal + " " + redVal + " " + greenVal + " " + blueVal + " " + modifierName + " !";
+		ws.send(animationString);
+	}
+}
 
 function isNumber(possiblyANum)
 {
@@ -80,36 +123,16 @@ function displayNewAnimation(animationName, speed, radius, red, green, blue, ani
 {
 	if(isNumber(speed) && isNumber(radius) && isNumber(red) && isNumber(green) && isNumber(blue) && $.inArray(animationName, animationsAvailable) > -1 && $.inArray(animationModifier, modifiersAvailable) > -1)
 	{
-		
-		 var temp = $('#firstAnimation').clone();
-		 $(temp).removeAttr("id");
-		 $(temp).appendTo('#animationList');
+		var temp = $('#firstAnimation').clone();
+		$(temp).removeAttr("id");
+		$(temp).appendTo('#animationList');
 
-		/*var animationList = $('#animationList').children;
-		var animationParts = animationList[0].children;
-		animationParts[animationParts.length - 1].click(function() {
-			$(this).parent.remove();
-		});*/
 		var animations = document.querySelectorAll('.animation');
 		var lastAnim = animations[animations.length - 1];
 		var X = lastAnim.querySelectorAll('.ximg')[0];
-		console.log($(X).parent());
 
 		$(X).click(function() {
 			$(this).parent().remove();
 		});
 	}
-}
-
-//Sends an updated animation to the server
-function send()
-{
-	var temp = speed;
-//	if(temp > 50)
-//		temp += (temp - 50) * 3;
-	temp /= 50;
-	var temp2 = radius;
-	temp2 /= 10;
-	if(connected)
-		ws.send("update " + temp + " " + temp2 + " " + R + " " + G + " " + B + " 0 !");
 }

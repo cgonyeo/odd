@@ -5,12 +5,6 @@ import tornado.web
 import socket
 import sys
 
-sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-server_address = ('127.0.0.1', 10001)
-print 'connecting to localhost at port 10001...'
-sock.connect(server_address)
-print 'connected'
-
 class WSHandler(tornado.websocket.WebSocketHandler):
 	def open(self):
 		print 'new connection';
@@ -20,10 +14,10 @@ class WSHandler(tornado.websocket.WebSocketHandler):
 		try:
 			sock.sendall(message + '\0')
 			print 'Message sent\n'
-			#data = sock.recv(4096)
-			#print 'Server says: %s\n' % data
-			#if data != "ok":
-			#	self.write_message(data)
+			data = sock.recv(4096)
+			print 'Server says: %s\n' % data
+			if data != "ok":
+				self.write_message(data)
 		finally:
 			if message == 'exit !':
 				exit()
@@ -36,6 +30,12 @@ application = tornado.web.Application([
 ], debug=True)
 
 if  __name__ == "__main__":
+	sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+	server_address = ('127.0.0.1', 10001)
+	print 'connecting to localhost at port 10001...'
+	sock.connect(server_address)
+	print 'connected'
+
 	print "Starting Tornado server"
 	http_server = tornado.httpserver.HTTPServer(application)
 	print "Tornado server initialized"
