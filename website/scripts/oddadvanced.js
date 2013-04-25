@@ -48,7 +48,6 @@ $(document).ready(function () {
 			console.log(tokens);
 			for(var i = 0; i < tokens.length; i+= 8)
 			{
-				console.log("New anim: " +tokens[i]+" "+tokens[i+1]+" "+tokens[i+2]+" "+tokens[i+3]+" "+tokens[i+4]+" "+tokens[i+5]+" "+tokens[i+6]);
 				displayNewAnimation(tokens[i], tokens[i+1], tokens[i+2], tokens[i+3], tokens[i+4], tokens[i+5], tokens[i+6]);
 			}
 		}
@@ -118,8 +117,11 @@ function sendUpdate()
 				break;
 		}
 
-		var animationString = animName + " " + speedVal + " " + radiusVal + " " + redVal + " " + greenVal + " " + blueVal + " " + modifierName + " !";
-		ws.send(animationString);
+		if(isNumber(speedVal) && isNumber(radiusVal) && isNumber(redVal) && isNumber(greenVal) && isNumber(blueVal))
+		{
+			var animationString = animName + " " + speedVal + " " + radiusVal + " " + redVal + " " + greenVal + " " + blueVal + " " + modifierName + " !";
+			ws.send(animationString);
+		}
 	}
 }
 

@@ -330,8 +330,8 @@ void *networkListen(char *buffer)
 		}
 		printf("Received: %s\n", buffer);
 		
-		double speed = -1, radius = -1;
-		int r = -1, g = -1, b = -1;
+		double speed = 0, radius = 0;
+		int r = 0, g = 0, b = 0;
 
 		char* temp = buffer;
 		char* line = buffer;
@@ -485,23 +485,23 @@ void *networkListen(char *buffer)
 				g = atoi(gc);
 				b = atoi(bc);
 
-				if(speed < 0)
+				if(speed == NULL || speed < 0)
 					speed = 0;
-				if(radius < 0)
+				if(radius == NULL || radius < 0)
 					radius = 0;
 
+				if(r == NULL || r < 0)
+					r = 0;
+				if(b == NULL || b < 0)
+					b = 0;
+				if(g == NULL || g < 0)
+					g = 0;
 				if(r > 4095)
 					r = 4095;
 				if(b > 4095)
 					b = 4095;
 				if(g > 4095)
 					g = 4095;
-				if(r < 0)
-					r = 0;
-				if(b < 0)
-					b = 0;
-				if(g < 0)
-					g = 0;
 				
 				void(*animation_function)(double, double, double, odd_led_t*, odd_led_t *[NUM_LEDS]) = NULL;
 				void(*animation_modifier)( odd_led_t* leds[NUM_LEDS], odd_led_t *[NUM_LEDS] ) = NULL;
