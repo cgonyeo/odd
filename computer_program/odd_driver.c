@@ -25,57 +25,24 @@
 #define LISTENQ (1024)
 
 #define DEV "/dev/ttyUSB0"
-/*
-#define SAMPLE_RATE (44100)
-#define FRAMES_PER_BUFFER (512)
-#define DITHER_FLAG (0)
-*/
-/* Select sample format. */
-/*#define PA_SAMPLE_TYPE  paFloat32
-typedef float SAMPLE;
-#define SAMPLE_SILENCE  (0.0f)
-#define PRINTF_S_FORMAT "%.8f"*/
 
 long double totalTime, elapsedTime;
 int done = 0;
 int numAnimations = 0;
 int timeLoops = 0;
-/*typedef struct {
-	int frameIndex;
-	int maxFrameIndex;
-	SAMPLE *recordedSamples;
-} paTestData;*/
 
 odd_led_t* leds[NUM_LEDS]; //All the LEDs in use
 odd_led_t* tempLeds[NUM_LEDS]; //Current alterations to the LEDs, used with animations
 animation_t* animations[50]; //All currently used animations.
 
-//SAMPLE soundBuffer[FRAMES_PER_BUFFER];
-//PaStream* stream;
-
-//Writes leds to the file stream fp.
-void write_odd(/*FILE* fp*/) {
-	/*unsigned char end = 255;
-	//printf("LED0 val: %i\n",leds[0]->R);
-	for(int i=0; i<NUM_LEDS; i++) {
-		fwrite(&((leds[i]->R)), 1, 1, fp);
-		fflush(fp);
-		fwrite(&((leds[i]->G)), 1, 1, fp);
-		fflush(fp);
-		fwrite(&((leds[i]->B)), 1, 1, fp);
-		fflush(fp);
-	}
-	fwrite(&end, 1, 1, fp);*/
-	int counter = 0;
+//Sends the news LED values to the hardware
+void write_odd() {
 	for(int j = 0; j < NUM_TLCS; j++)
-		for(int i = 0; i < 5; i++)
+		for(int i = 0; i < 8; i++)
 		{
-			setLed(j * 16 + i*3, leds[i]->R);
-			counter++;
-			setLed(j * 16 + i*3+1, leds[i]->G);
-			counter++;
-			setLed(j * 16 + i*3+2, leds[i]->B);
-			counter++;
+			setLed(j * 24 + i*3, leds[i]->R);
+			setLed(j * 24 + i*3+1, leds[i]->G);
+			setLed(j * 24 + i*3+2, leds[i]->B);
 		}
 	updateLeds();
 }
@@ -137,16 +104,6 @@ void removeAnimation(int index)
 void *updateLoop(void *arg) {
 	(void)arg;
 	int failed = 0;
-	//Open the stream, exit if it fails
-	//int fd = open(DEV, O_WRONLY);
-	//if( fd == -1 ) {
-	//	perror("open");
-	//	failed = 1;
-	//	exit(EXIT_FAILURE);
-	//}
-	//FILE *fp;
-	//if(!failed)
-	//	fp  = fdopen(fd, "w");
 	
 	elapsedTime = 0;
 	totalTime = 0;
@@ -170,16 +127,12 @@ void *updateLoop(void *arg) {
 				
 		if(failed==0)
 			write_odd();
-		//else
-		//	write_console();
+
 		usleep(500);
 	}
 	resetLeds();
 	if(failed==0)
 		write_odd();
-	//and we're done, close the stream.
-	//if(failed==0)
-	//	fclose(fp);
 	return NULL;
 }
 
@@ -203,87 +156,7 @@ void getUserInput(char *buffer)
 	}
 	buffer[char_count] = 0x00;
 }
-/*
-static int recordCallback( const void *inputBuffer, void *outputBuffer,
-			unsigned long framesPerBuffer, 
-			const PaStreamCallbackTimeInfo* timeInfo,
-			PaStreamCallbackFlags statusFlags,
-			void *userData )
-{
-	const SAMPLE *input = (const SAMPLE*)inputBuffer;
-	(void)outputBuffer;
-	(void)timeInfo;
-	(void)statusFlags;
-	(void)userData;
 
-	for(int i = 0; i < framesPerBuffer; i++)
-	{
-		soundBuffer[i] = input[i];
-	}
-	return paContinue;
-}
-
-void audioInitialization()
-{
-	PaStreamParameters inputParameters;
-	PaError err = paNoError;
-	
-	err = Pa_Initialize();
-	if(err != paNoError)
-	{
-		printf("Error calling PaInitialize (line 198)\n");
-		exit(EXIT_FAILURE);
-	}
-
-	inputParameters.device = Pa_GetDefaultInputDevice();
-	if(inputParameters.device == paNoDevice)
-	{
-		printf("Error: no default input device\n");
-		exit(EXIT_FAILURE);
-	}
-
-	inputParameters.channelCount = 2;
-	inputParameters.sampleFormat = PA_SAMPLE_TYPE;
-	inputParameters.suggestedLatency = Pa_GetDeviceInfo(inputParameters.device)->defaultLowInputLatency;
-	inputParameters.hostApiSpecificStreamInfo = NULL;
-
-	err = Pa_OpenStream(
-		&stream,
-		&inputParameters,
-		NULL,
-		SAMPLE_RATE,
-		FRAMES_PER_BUFFER,
-		paClipOff,
-		recordCallback,
-		NULL);
-	
-	if(err != paNoError)
-	{
-		printf("Error opening stream\n");
-		exit(EXIT_FAILURE);
-	}
-
-	err = Pa_StartStream(stream);
-	if(err != paNoError)
-	{
-		printf("Error starting stream\n");
-		exit(EXIT_FAILURE);
-	}
-
-	printf("Audio setup complete\n");
-}
-
-void audioStop()
-{
-	PaError err = paNoError;
-	err = Pa_CloseStream(stream);
-	if(err != paNoError)
-	{
-		printf("Error closing audio stream\n");
-		exit(EXIT_FAILURE);
-	}
-}
-*/
 void *networkListen(char *buffer)
 {
 	int list_s;		//Listening socket
@@ -335,12 +208,7 @@ void *networkListen(char *buffer)
 
 		char* temp = buffer;
 		char* line = buffer;
-		/*char* temp = strchr(buffer, '!');
-		*temp++ = '\0';
-		char* line = buffer;
-
-		line = strtok(buffer,"!");*/
-
+		
 		line = temp;
 		temp = strchr(buffer, '!');
 		if(temp != NULL)
@@ -485,16 +353,16 @@ void *networkListen(char *buffer)
 				g = atoi(gc);
 				b = atoi(bc);
 
-				if(speed == NULL || speed < 0)
+				if(speed < 0)
 					speed = 0;
-				if(radius == NULL || radius < 0)
+				if(radius < 0)
 					radius = 0;
 
-				if(r == NULL || r < 0)
+				if(r < 0)
 					r = 0;
-				if(b == NULL || b < 0)
+				if(b < 0)
 					b = 0;
-				if(g == NULL || g < 0)
+				if(g < 0)
 					g = 0;
 				if(r > 4095)
 					r = 4095;
@@ -548,11 +416,6 @@ void *networkListen(char *buffer)
 				
 
 			}
-			/*printf("Current line: %s\n", line);
-			printf("Buffer: %s\n", buffer);
-			line = strtok(NULL,"!");
-			printf("New line: %s\n", line);
-			printf("Buffer: %s\n", buffer);*/
 			line = temp;
 			temp = strchr(buffer, '!');
 			if(temp != NULL)
@@ -596,10 +459,7 @@ int main(void)
 
 	addAnimation(dammitAnimation, 0.05, 0.5, color, addLeds);*/
 	
-	while(!done)
-	{
-		networkListen(input);
-	}
+	networkListen(input);
 	printf("Exiting...\n");
 	done = 1;
 	pthread_join(ul, NULL);

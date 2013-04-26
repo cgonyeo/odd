@@ -48,7 +48,7 @@ $(document).ready(function () {
 			console.log(tokens);
 			for(var i = 0; i < tokens.length; i+= 8)
 			{
-				displayNewAnimation(tokens[i], tokens[i+1], tokens[i+2], tokens[i+3], tokens[i+4], tokens[i+5], tokens[i+6]);
+				displayNewAnimation(tokens[i], tokens[i+1], tokens[i+2], (tokens[i+3]/16), (tokens[i+4]/16), (tokens[i+5]/16), tokens[i+6]);
 			}
 		}
 	};
@@ -119,7 +119,7 @@ function sendUpdate()
 
 		if(isNumber(speedVal) && isNumber(radiusVal) && isNumber(redVal) && isNumber(greenVal) && isNumber(blueVal))
 		{
-			var animationString = animName + " " + speedVal + " " + radiusVal + " " + redVal + " " + greenVal + " " + blueVal + " " + modifierName + " !";
+			var animationString = animName + " " + speedVal + " " + radiusVal + " " + (redVal*16) + " " + (greenVal*16) + " " + (blueVal*16) + " " + modifierName + " !";
 			ws.send(animationString);
 		}
 	}

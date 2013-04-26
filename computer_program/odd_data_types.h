@@ -3,7 +3,7 @@
 #ifndef ODD_DATA_TYPES
 #define ODD_DATA_TYPES
 
-#define NUM_LEDS ((NUM_TLCS * 16 - NUM_TLCS) / 3)
+#define NUM_LEDS ((NUM_TLCS * 24) / 3)
 
 //Used to represent a single LED
 typedef struct {

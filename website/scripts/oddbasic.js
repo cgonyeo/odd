@@ -78,7 +78,7 @@ $(document).delegate('#setall', 'pageshow', function() {
 	temp /= 50;
 	var temp2 = radius;
 	temp2 /= 10;
-	ws.send("stop !" + animation + " " + temp + " " + temp2 + " " + R + " " + G + " " + B + " " + modifier + " !");
+	ws.send("stop !" + animation + " " + temp + " " + temp2 + " " + (R*16) + " " + (G*16) + " " + (B*16) + " " + modifier + " !");
 });
 
 $(document).delegate('#pulse', 'pageshow', function() {
@@ -96,7 +96,7 @@ $(document).delegate('#pulse', 'pageshow', function() {
 	temp /= 50;
 	var temp2 = radius;
 	temp2 /= 10;
-	ws.send("stop !" + animation + " " + temp + " " + temp2 + " " + R + " " + G + " " + B + " " + modifier + " !");
+	ws.send("stop !" + animation + " " + temp + " " + temp2 + " " + (R*16) + " " + (G*16) + " " + (B*16) + " " + modifier + " !");
 });
 
 $(document).delegate('#strobe', 'pageshow', function() {
@@ -114,7 +114,7 @@ $(document).delegate('#strobe', 'pageshow', function() {
 	temp /= 50;
 	var temp2 = radius;
 	temp2 /= 10;
-	ws.send("stop !" + animation + " " + temp + " " + temp2 + " " + R + " " + G + " " + B + " " + modifier + " !");
+	ws.send("stop !" + animation + " " + temp + " " + temp2 + " " + (R*16) + " " + (G*16) + " " + (B*16) + " " + modifier + " !");
 });
 
 $(document).delegate('#cyloneye', 'pageshow', function() {
@@ -132,7 +132,7 @@ $(document).delegate('#cyloneye', 'pageshow', function() {
 	temp /= 50;
 	var temp2 = radius;
 	temp2 /= 10;
-	ws.send("stop !" + animation + " " + temp + " " + temp2 + " " + R + " " + G + " " + B + " " + modifier + " !");
+	ws.send("stop !" + animation + " " + temp + " " + temp2 + " " + (R*16) + " " + (G*16) + " " + (B*16) + " " + modifier + " !");
 });
 
 //Sends an updated animation to the server
@@ -145,7 +145,7 @@ function send()
 	var temp2 = radius;
 	temp2 /= 10;
 	if(connected)
-		ws.send("update " + temp + " " + temp2 + " " + R + " " + G + " " + B + " 0 !");
+		ws.send("update " + temp + " " + temp2 + " " + (R*16) + " " + (G*16) + " " + (B*16) + " 0 !");
 }
 
 //Radius slider has changed.
