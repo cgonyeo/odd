@@ -12,7 +12,7 @@
 #include <sys/types.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
-#include "portaudio.h"
+#include "/usr/local/include/portaudio.h"
 #include "tlc5940.h"
 #include "odd_audio.h"
 #include "odd_data_types.h"
@@ -35,6 +35,15 @@ odd_led_t* leds[NUM_LEDS]; //All the LEDs in use
 odd_led_t* tempLeds[NUM_LEDS]; //Current alterations to the LEDs, used with animations
 animation_t* animations[50]; //All currently used animations.
 
+//Writes the led array to the console
+void write_console() {
+	printf("\n");
+	for(int i=0; i<NUM_LEDS; i++) {
+		printf("%d, ", leds[i]->R);
+		fflush(NULL);
+	}
+}
+
 //Sends the news LED values to the hardware
 void write_odd() {
 	for(int j = 0; j < NUM_TLCS; j++)
@@ -45,15 +54,6 @@ void write_odd() {
 			setLed(j * 24 + i*3+2, leds[i]->B);
 		}
 	updateLeds();
-}
-
-//Writes the led array to the console
-void write_console() {
-	printf("\n");
-	for(int i=0; i<NUM_LEDS; i++) {
-		printf("%d, ", leds[i]->R);
-		fflush(NULL);
-	}
 }
 
 //Resets all LEDs to 0
@@ -450,14 +450,14 @@ int main(void)
 
 	tlc5940init();
 
-	/*audioInitialization();
+	audioInitialization();
 
 	odd_led_t* color = malloc(sizeof(odd_led_t));
-	color->R = 5;
+	color->R = 100;
 	color->G = 0;
 	color->B = 0;
 
-	addAnimation(dammitAnimation, 0.05, 0.5, color, addLeds);*/
+	addAnimation(dammitAnimation, 0.05, 0.5, color, addLeds);
 	
 	networkListen(input);
 	printf("Exiting...\n");

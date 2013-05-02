@@ -151,7 +151,7 @@ function displayNewAnimation(animationName, newSpeed, newRadius, red, green, blu
 				animSelector.selectedIndex = 1;
 				animName = "strobe";
 				break;
-			case "strobestrobe":
+			case "smoothstrobe":
 				animSelector.selectedIndex = 2;
 				animName = "smoothstrobe";
 				break;

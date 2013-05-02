@@ -207,6 +207,7 @@ void dammitAnimation(double speed, double radius, double totalTime, odd_led_t* c
 			avg -= soundBuffer[i];
 	}
 	avg /= FRAMES_PER_BUFFER;
+	avg *= 2;
 	//printf("Average: %f\n", avg);
 
 	double r = color->R / 4095;
@@ -242,5 +243,4 @@ void dammitAnimation(double speed, double radius, double totalTime, odd_led_t* c
 		tempLeds[i]->G = color->G * avg;
 		tempLeds[i]->B = color->B * avg;
 	}
-	
 }

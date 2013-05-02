@@ -3,7 +3,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/time.h>
-#include "portaudio.h"
+#include "/usr/local/include/portaudio.h"
 #include "odd_audio.h"
 
 SAMPLE soundBuffer[FRAMES_PER_BUFFER];
@@ -64,7 +64,7 @@ void audioInitialization()
 		exit(EXIT_FAILURE);
 	}
 
-	inputParameters.channelCount = 2;
+	inputParameters.channelCount = 1;
 	inputParameters.sampleFormat = PA_SAMPLE_TYPE;
 	inputParameters.suggestedLatency = Pa_GetDeviceInfo(inputParameters.device)->defaultLowInputLatency;
 	inputParameters.hostApiSpecificStreamInfo = NULL;
@@ -81,7 +81,7 @@ void audioInitialization()
 	
 	if(err != paNoError)
 	{
-		printf("Error opening stream\n");
+		printf("Error opening stream\n%s\n", Pa_GetErrorText(err));
 		exit(EXIT_FAILURE);
 	}
 
