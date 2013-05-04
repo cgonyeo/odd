@@ -7,10 +7,11 @@ typedef float SAMPLE;
 #define SAMPLE_SILENCE  (0.0f)
 #define PRINTF_S_FORMAT "%.8f"
 
-#define FRAMES_PER_BUFFER (32)
+#define FRAMES_PER_BUFFER (512)
 #define SAMPLE_RATE (44100)
 
 void getSoundBuffer(SAMPLE* buf);
+void runFFT(SAMPLE* buf);
 static int recordCallback( const void *inputBuffer, void *outputBuffer,
 			unsigned long framesPerBuffer, 
 			const PaStreamCallbackTimeInfo* timeInfo,

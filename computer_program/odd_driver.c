@@ -13,7 +13,7 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include "/usr/local/include/portaudio.h"
-#include "tlc5940.h"
+#include "tlc5947.h"
 #include "odd_audio.h"
 #include "odd_data_types.h"
 #include "odd_math.h"
@@ -49,9 +49,9 @@ void write_odd() {
 	for(int j = 0; j < NUM_TLCS; j++)
 		for(int i = 0; i < 8; i++)
 		{
-			setLed(j * 24 + i*3, leds[i]->R);
-			setLed(j * 24 + i*3+1, leds[i]->G);
-			setLed(j * 24 + i*3+2, leds[i]->B);
+			setLed(j * 24 + i*3, leds[j * 8 + i]->R);
+			setLed(j * 24 + i*3+1, leds[j * 8 + i]->G);
+			setLed(j * 24 + i*3+2, leds[j * 8 + i]->B);
 		}
 	updateLeds();
 }
@@ -175,6 +175,17 @@ void *networkListen(char *buffer)
 	servaddr.sin_family = AF_INET;
 	servaddr.sin_addr.s_addr = inet_addr("127.0.0.1");//htonl(INADDR_ANY);
 	servaddr.sin_port = htons(port);
+
+	int yes = 1;
+
+	if(setsockopt(list_s, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) == -1)
+	{
+		printf("Error setting socket options\n");
+		exit(EXIT_FAILURE);
+	}
+
+
+
 	printf("Binding to socket\n");
 	if(bind(list_s, (struct sockaddr *) &servaddr, sizeof(servaddr)) < 0)
 	{
@@ -448,7 +459,7 @@ int main(void)
 	char input[255];
 	input[0] = '\0';
 
-	tlc5940init();
+	tlc5947init();
 
 	audioInitialization();
 
@@ -463,7 +474,7 @@ int main(void)
 	printf("Exiting...\n");
 	done = 1;
 	pthread_join(ul, NULL);
-	tlc5940cleanup();
+	tlc5947cleanup();
 	audioStop();
 	for(int i = 0; i < numAnimations; i++)
 	{

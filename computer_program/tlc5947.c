@@ -120,7 +120,6 @@ void updateLeds()
 		digitalWrite(SIN, tlcleds[i] & 1);
 		pulsePin(SCLK);
 	}
-
 	digitalWrite(BLANK, 1);
 	pulsePin(XLAT);
 	digitalWrite(BLANK, 0);

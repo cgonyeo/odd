@@ -1,4 +1,4 @@
-#include "tlc5940.h"
+#include "tlc5947.h"
 
 #ifndef ODD_DATA_TYPES
 #define ODD_DATA_TYPES

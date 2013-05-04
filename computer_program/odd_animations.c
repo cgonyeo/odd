@@ -40,7 +40,7 @@ void cylonEye(double speed, double radius, double totalTime, odd_led_t* color, o
 		center = odd_remainder(time, 1);
 	else
 		center = 1 - odd_remainder(time, 1);
-	center = sin(center);
+	center = odd_sin(center);
 	center *= numLeds;
 	
 	
@@ -157,7 +157,7 @@ void smoothStrobe(double speed, double radius, double totalTime, odd_led_t* colo
 		power = odd_remainder(time, 1);
 	else
 		power = 1 - odd_remainder(time, 1);
-	power = pow(power, 2);
+	power = odd_pow(power, 2);
 	power *= 1.5;
 	power -= 0.5;
 	if(power < 0)
@@ -179,7 +179,7 @@ void sinAnimation(double speed, double radius, double totalTime, odd_led_t* colo
 		power = odd_remainder(time, 1);
 	else
 		power = 1 - odd_remainder(time, 1);
-	power = sin(power);
+	power = odd_sin(power);
 	for(int i = 0; i < NUM_LEDS; i++)
 	{
 		tempLeds[i]->R = color->R * power;
@@ -188,7 +188,7 @@ void sinAnimation(double speed, double radius, double totalTime, odd_led_t* colo
 	}
 }
 
-void dammitAnimation(double speed, double radius, double totalTime, odd_led_t* color, odd_led_t* tempLeds[NUM_LEDS])
+void volumeAnimation(double speed, double radius, double totalTime, odd_led_t* color, odd_led_t* tempLeds[NUM_LEDS])
 {
 	(void)speed;
 	(void)radius;
@@ -243,4 +243,37 @@ void dammitAnimation(double speed, double radius, double totalTime, odd_led_t* c
 		tempLeds[i]->G = color->G * avg;
 		tempLeds[i]->B = color->B * avg;
 	}
+}
+
+void dammitAnimation(double speed, double radius, double totalTime, odd_led_t* color, odd_led_t* tempLeds[NUM_LEDS])
+{
+	(void)speed;
+	(void)radius;
+	(void)totalTime;
+
+	int lowerBound = 0.0 * FRAMES_PER_BUFFER;
+	int upperBound = 1.0 * FRAMES_PER_BUFFER;
+	int freqsPerLed = (upperBound - lowerBound) / NUM_LEDS;
+	
+	SAMPLE soundBuffer[FRAMES_PER_BUFFER];
+	runFFT(soundBuffer);
+	//printf("\n[");
+	for(int i = 0; i < NUM_LEDS; i++)
+	{
+		int avg = 0;
+		for(int j = i * freqsPerLed + lowerBound; j < (i+1) * freqsPerLed + lowerBound; j++)
+		{
+			int temp = soundBuffer[j] * 300;
+			if(temp < 0)
+				temp *= -1;
+			avg += temp;
+			//printf("%i,",temp);
+		}
+		avg /= freqsPerLed;
+
+		tempLeds[i]->R = avg;
+		tempLeds[i]->B = avg;
+	}
+	//printf("]\n");
+	//printf("\n");
 }

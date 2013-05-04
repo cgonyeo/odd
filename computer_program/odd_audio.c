@@ -3,16 +3,32 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/time.h>
+#include <math.h>
+#include <fftw3.h>
 #include "/usr/local/include/portaudio.h"
 #include "odd_audio.h"
+#include "odd_math.h"
 
-SAMPLE soundBuffer[FRAMES_PER_BUFFER];
 PaStream* stream;
+fftw_complex *in, *out;
+fftw_plan plan;
 
 void getSoundBuffer(SAMPLE* buf)
 {
 	for(int i = 0; i < FRAMES_PER_BUFFER; i++)
-		buf[i] = soundBuffer[i];
+		buf[i] = in[i][0];
+}
+
+void runFFT(SAMPLE* buf)
+{
+	//printf("\n[");
+	fftw_execute(plan);
+	for(int i = 0; i < FRAMES_PER_BUFFER; i++)
+	{
+		buf[i] = sqrt(out[i][0] * out[i][0] + out[i][1] * out[i][1]);
+	//	printf("%f,",buf[i]);
+	}
+	//printf("]\n");
 }
 
 static int recordCallback( const void *inputBuffer, void *outputBuffer,
@@ -29,7 +45,7 @@ static int recordCallback( const void *inputBuffer, void *outputBuffer,
 
 	for(int i = 0; i < framesPerBuffer; i++)
 	{
-		soundBuffer[i] = input[i];
+		in[i][0] = input[i];
 	}
 //	printf("Callback called\n");
 	return paContinue;
@@ -93,6 +109,20 @@ void audioInitialization()
 	}
 
 	printf("Audio setup complete\n");
+
+	printf("Beginning FFT initialization\n");
+
+	in = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * FRAMES_PER_BUFFER);
+	out = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * FRAMES_PER_BUFFER);
+
+	for(int i = 0; i < FRAMES_PER_BUFFER; i++)
+	{
+		in[i][0] = 0;
+		in[i][1] = 0;
+	}
+
+	plan = fftw_plan_dft_1d(FRAMES_PER_BUFFER, in, out, FFTW_FORWARD, FFTW_ESTIMATE);
+	printf("FFT initialization complete\n");
 }
 
 void audioStop()
@@ -104,4 +134,7 @@ void audioStop()
 		printf("Error closing audio stream\n");
 		exit(EXIT_FAILURE);
 	}
+	fftw_destroy_plan(plan);
+	fftw_free(in);
+	fftw_free(out);
 }

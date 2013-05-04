@@ -4,7 +4,6 @@
 #include <unistd.h>
 #include "odd_math.h"
 
-
 //Returns the odd_remainder of dividend / divisor
 double odd_remainder(double dividend, int divisor) 
 {
@@ -14,10 +13,10 @@ double odd_remainder(double dividend, int divisor)
 
 //Returns the value of X raised to Y
 //Y should be an integer. Ignore the fact that it isn't.
-double pow(double x, double y)
+double odd_pow(double x, double y)
 {
 	if(y > 0)
-		return pow(x, y - 1) * x;
+		return odd_pow(x, y - 1) * x;
 	else
 		return 1.0;
 }
@@ -25,10 +24,10 @@ double pow(double x, double y)
 //Returns a taylor series approximation for (sin((x - 0.5) * pi) + 1) / 2
 //Put in a number between 0 and 1
 //and it returns a number between 0 and 1
-double sin(double x)
+double odd_sin(double x)
 {
 	x -= .5;
-	x = PI * x - ( pow(PI, 3) * pow(x, 3) ) / 6 + ( pow(PI, 5) * pow(x, 5) ) / 120;
+	x = PI * x - ( odd_pow(PI, 3) * odd_pow(x, 3) ) / 6 + ( odd_pow(PI, 5) * odd_pow(x, 5) ) / 120;
 	x++;
 	x /= 2;
 	return x;

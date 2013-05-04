@@ -5,8 +5,8 @@
 
 
 double odd_remainder(double dividend, int divisor);
-double pow(double x, double y);
-double sin(double x);
+double odd_pow(double x, double y);
+double odd_sin(double x);
 double formatTime(long int seconds, long int useconds);
 
 #endif
