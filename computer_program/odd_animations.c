@@ -252,28 +252,31 @@ void dammitAnimation(double speed, double radius, double totalTime, odd_led_t* c
 	(void)totalTime;
 
 	int lowerBound = 0.0 * FRAMES_PER_BUFFER;
-	int upperBound = 1.0 * FRAMES_PER_BUFFER;
-	int freqsPerLed = (upperBound - lowerBound) / NUM_LEDS;
+	int upperBound = 0.05 * FRAMES_PER_BUFFER;
+	double freqsPerLed = (upperBound - lowerBound) * 1.0 / NUM_LEDS;
 	
 	SAMPLE soundBuffer[FRAMES_PER_BUFFER];
 	runFFT(soundBuffer);
-	//printf("\n[");
+	printf("\n[");
 	for(int i = 0; i < NUM_LEDS; i++)
 	{
 		int avg = 0;
 		for(int j = i * freqsPerLed + lowerBound; j < (i+1) * freqsPerLed + lowerBound; j++)
 		{
-			int temp = soundBuffer[j] * 300;
+			//printf("%f,",soundBuffer[j]);
+			int temp = soundBuffer[j] * 30;
 			if(temp < 0)
 				temp *= -1;
 			avg += temp;
-			//printf("%i,",temp);
+			printf("%i,",temp);
 		}
 		avg /= freqsPerLed;
+		
+		avg = odd_pow(avg / 4096.0, 2) * 4096;
 
 		tempLeds[i]->R = avg;
 		tempLeds[i]->B = avg;
 	}
-	//printf("]\n");
+	printf("]\n");
 	//printf("\n");
 }
