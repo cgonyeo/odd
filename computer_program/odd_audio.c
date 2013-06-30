@@ -13,22 +13,25 @@ PaStream* stream;
 fftw_complex *in, *out;
 fftw_plan plan;
 
+float storage[FFT_INPUT_SIZE];
+
 void getSoundBuffer(SAMPLE* buf)
 {
-	for(int i = 0; i < FRAMES_PER_BUFFER; i++)
-		buf[i] = in[i][0];
+	for(int i = 0; i < FFT_OUTPUT_SIZE; i++)
+		buf[i] = storage[i];
 }
 
 void runFFT(SAMPLE* buf)
 {
-	//printf("\n[");
+	//("runFFT called\n");
+	for(int i = 0; i < FFT_INPUT_SIZE; i++)
+		in[i][0] = storage[i];
 	fftw_execute(plan);
-	for(int i = 0; i < FRAMES_PER_BUFFER; i++)
+	for(int i = 0; i < FFT_OUTPUT_SIZE; i++)
 	{
 		buf[i] = sqrt(out[i][0] * out[i][0] + out[i][1] * out[i][1]);
-	//	printf("%f,",buf[i]);
 	}
-	//printf("]\n");
+	//("runFFT finished\n");
 }
 
 static int recordCallback( const void *inputBuffer, void *outputBuffer,
@@ -43,10 +46,20 @@ static int recordCallback( const void *inputBuffer, void *outputBuffer,
 	(void)statusFlags;
 	(void)userData;
 
+	for(int i = 0; i < FFT_INPUT_SIZE; i++)
+		storage[i] = storage[i + framesPerBuffer];
 	for(int i = 0; i < framesPerBuffer; i++)
-	{
-		in[i][0] = input[i];
-	}
+		storage[FFT_INPUT_SIZE - framesPerBuffer + i] = input[i];
+
+	//for(int i = 0; i < FFT_INPUT_SIZE - framesPerBuffer; i++)
+	//{
+	//	in[FFT_INPUT_SIZE - i - 1][0] = in[FFT_INPUT_SIZE - framesPerBuffer - i - 1][0];
+	//}
+
+	//for(int i = 0; i < framesPerBuffer; i++)
+	//{
+	//	in[i][0] = input[i];
+	//}
 //	printf("Callback called\n");
 	return paContinue;
 }
@@ -66,7 +79,6 @@ void audioInitialization()
 	printf("Getting devices...\n");
 	const PaDeviceInfo *deviceInfo;
 	int numDevices = Pa_GetDeviceCount();
-	printf("%i devices found\n", numDevices);
 	for(int i = 0; i < numDevices; i++)
 	{
 		deviceInfo = Pa_GetDeviceInfo(i);
@@ -110,18 +122,21 @@ void audioInitialization()
 
 	printf("Audio setup complete\n");
 
+	for(int i = 0; i < FFT_INPUT_SIZE; i++)
+		storage[i] = 0;
+
 	printf("Beginning FFT initialization\n");
 
-	in = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * FRAMES_PER_BUFFER);
-	out = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * FRAMES_PER_BUFFER);
+	in = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * FFT_INPUT_SIZE);
+	out = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * FFT_INPUT_SIZE);
 
-	for(int i = 0; i < FRAMES_PER_BUFFER; i++)
+	for(int i = 0; i < FFT_INPUT_SIZE; i++)
 	{
 		in[i][0] = 0;
 		in[i][1] = 0;
 	}
 
-	plan = fftw_plan_dft_1d(FRAMES_PER_BUFFER, in, out, FFTW_FORWARD, FFTW_ESTIMATE);
+	plan = fftw_plan_dft_1d(FFT_INPUT_SIZE, in, out, FFTW_FORWARD, FFTW_MEASURE);
 	printf("FFT initialization complete\n");
 }
 

@@ -48,7 +48,7 @@ $(document).ready(function () {
 			console.log(tokens);
 			for(var i = 0; i < tokens.length; i+= 8)
 			{
-				displayNewAnimation(tokens[i], tokens[i+1], tokens[i+2], (tokens[i+3]/16), (tokens[i+4]/16), (tokens[i+5]/16), tokens[i+6]);
+				displayNewAnimation(tokens[i], tokens[i+1], (tokens[i+2]/16), (tokens[i+3]/16), (tokens[i+4]/16), tokens[i+5]);
 			}
 		}
 	};
@@ -119,7 +119,7 @@ function sendUpdate()
 
 		if(isNumber(speedVal) && isNumber(radiusVal) && isNumber(redVal) && isNumber(greenVal) && isNumber(blueVal))
 		{
-			var animationString = animName + " " + speedVal + " " + radiusVal + " " + (redVal*16) + " " + (greenVal*16) + " " + (blueVal*16) + " " + modifierName + " !";
+			var animationString = animName + " " + speedVal + "@" + radiusVal + "@ " + (redVal*16) + " " + (greenVal*16) + " " + (blueVal*16) + " " + modifierName + " !";
 			ws.send(animationString);
 		}
 	}
@@ -130,9 +130,9 @@ function isNumber(possiblyANum)
 	return ! isNaN (possiblyANum-0) && possiblyANum !== null && possiblyANum !== "" && possiblyANum !== false;
 }
 
-function displayNewAnimation(animationName, newSpeed, newRadius, red, green, blue, animationModifier)
+function displayNewAnimation(animationName, params, red, green, blue, animationModifier)
 {
-	if(isNumber(newSpeed) && isNumber(newRadius) && isNumber(red) && isNumber(green) && isNumber(blue) && $.inArray(animationName, animationsAvailable) > -1 && $.inArray(animationModifier, modifiersAvailable) > -1)
+	if(isNumber(params) && isNumber(red) && isNumber(green) && isNumber(blue) && $.inArray(animationName, animationsAvailable) > -1 && $.inArray(animationModifier, modifiersAvailable) > -1)
 	{
 		var temp = $('#firstAnimation').clone();
 		$(temp).removeAttr("id");
@@ -162,11 +162,11 @@ function displayNewAnimation(animationName, newSpeed, newRadius, red, green, blu
 		}
 		console.log("Anim selector: " + animSelector);
 
-		var newSpeedInput = lastAnim.querySelectorAll('.speed')[0];
-		newSpeedInput.value = newSpeed;
-		console.log("Speed input: " + newSpeedInput);
+		var paramsInput = lastAnim.querySelectorAll('.speed')[0];
+		paramsInput.value = newSpeed;
+		console.log("Speed input: " + paramsInput);
 		var newRadiusInput = lastAnim.querySelectorAll('.radius')[0];
-		newRadiusInput.value = newRadius;
+		//newRadiusInput.value = newRadius;
 		console.log("Radius input: " + newRadiusInput);
 		var redInput = lastAnim.querySelectorAll('.red')[0];
 		redInput.value = red;

@@ -17,10 +17,38 @@
 #include "odd_data_types.h"
 #include "odd_math.h"
 #include "odd_animations.h"
+#include <math.h>
+
+//Helper method. Returns the length of the array each animation is expecting in double* params.
+//If the function is not found, returns -1
+int numParams(void (*function)(double*, double, odd_led_t*, odd_led_t *[NUM_LEDS]))
+{
+
+	if(function == cylonEye)
+		return 2;
+	if(function == cylonEye_Linear)
+		return 2;
+	if(function == strobe)
+		return 1;
+	if(function == setAll)
+		return 0;
+	if(function == smoothStrobe)
+		return 1;
+	if(function == sinAnimation)
+		return 1;
+	if(function == volumeAnimation)
+		return 0;
+	if(function == dammitAnimation)
+		return 0;
+	return -1;
+}
 
 //Animation: Lights up a clump of LEDs and then travels back and forth across the row
 //Follows a basic sin curve (moves faster in the middle, slower at the ends)
-void cylonEye(double speed, double radius, double totalTime, odd_led_t* color, odd_led_t* tempLeds[NUM_LEDS]) {
+void cylonEye(double* params, double totalTime, odd_led_t* color, odd_led_t* tempLeds[NUM_LEDS]) {
+	double speed = params[0];
+	double radius = params[1];
+
 	//scale the time by our speed to alter the rate of tf the animation
 	double time = totalTime * speed;
 	//double to keep track of the location of the center
@@ -70,7 +98,9 @@ void cylonEye(double speed, double radius, double totalTime, odd_led_t* color, o
 }
 
 //Animation: same as cylonEye but follows a linear movement (constant speed)
-void cylonEye_Linear(double speed, double radius, double totalTime, odd_led_t* color, odd_led_t* tempLeds[NUM_LEDS]) {
+void cylonEye_Linear(double* params, double totalTime, odd_led_t* color, odd_led_t* tempLeds[NUM_LEDS]) {
+	double speed = params[0];
+	double radius = params[1];
 	//scale the time by our speed to alter the rate of tf the animation
 	double time = totalTime * speed;
 	//double to keep track of the location of the center
@@ -119,9 +149,9 @@ void cylonEye_Linear(double speed, double radius, double totalTime, odd_led_t* c
 }
 
 //Animation: Turns the LEDs off and on and off and on and off and on and off...
-void strobe(double speed, double radius, double totalTime, odd_led_t* color, odd_led_t* tempLeds[NUM_LEDS])
+void strobe(double* params, double totalTime, odd_led_t* color, odd_led_t* tempLeds[NUM_LEDS])
 {
-	(void)radius;
+	double speed = params[0];
 	double time = totalTime * speed;
 	double power = 0;
 	if((int)time % 2 == 1)
@@ -135,10 +165,9 @@ void strobe(double speed, double radius, double totalTime, odd_led_t* color, odd
 }
 
 //Animation: Sets all LEDs to color
-void setAll(double speed, double radius, double totalTime, odd_led_t* color, odd_led_t* tempLeds[NUM_LEDS])
+void setAll(double* params, double totalTime, odd_led_t* color, odd_led_t* tempLeds[NUM_LEDS])
 {
-	(void)radius;
-	(void)speed;
+	(void)params;
 	for(int i = 0; i < NUM_LEDS; i++)
 	{
 		tempLeds[i]->R = color->R;
@@ -148,9 +177,10 @@ void setAll(double speed, double radius, double totalTime, odd_led_t* color, odd
 }
 
 //Animation: Like strobe but fades LEDs in and out and pauses when they're off.
-void smoothStrobe(double speed, double radius, double totalTime, odd_led_t* color, odd_led_t* tempLeds[NUM_LEDS])
+void smoothStrobe(double* params, double totalTime, odd_led_t* color, odd_led_t* tempLeds[NUM_LEDS])
 {
-	(void)radius;
+	double speed = params[0];
+
 	double time = totalTime * speed;
 	double power = 0;
 	if((int)time % 2 == 1)
@@ -170,9 +200,10 @@ void smoothStrobe(double speed, double radius, double totalTime, odd_led_t* colo
 }
 
 //Animation that makes the brightness of the LEDs follow a sin curve
-void sinAnimation(double speed, double radius, double totalTime, odd_led_t* color, odd_led_t* tempLeds[NUM_LEDS])
+void sinAnimation(double* params, double totalTime, odd_led_t* color, odd_led_t* tempLeds[NUM_LEDS])
 {
-	(void)radius;
+	double speed = params[0];
+
 	double time = totalTime * speed;
 	double power = 0;
 	if((int)time % 2 == 1)
@@ -188,95 +219,153 @@ void sinAnimation(double speed, double radius, double totalTime, odd_led_t* colo
 	}
 }
 
-void volumeAnimation(double speed, double radius, double totalTime, odd_led_t* color, odd_led_t* tempLeds[NUM_LEDS])
+void volumeAnimation(double* params, double totalTime, odd_led_t* color, odd_led_t* tempLeds[NUM_LEDS])
 {
-	(void)speed;
-	(void)radius;
+	(void)params;
 	(void)totalTime;
 	
 	double avg = 0;
 
-	SAMPLE soundBuffer[FRAMES_PER_BUFFER];
+	SAMPLE soundBuffer[FFT_INPUT_SIZE];
 	getSoundBuffer(soundBuffer);
 
-	for(int i = 0; i < FRAMES_PER_BUFFER; i++)
+	for(int i = 0; i < FFT_INPUT_SIZE; i++)
 	{
 		if(soundBuffer[i] > 0)
 			avg += soundBuffer[i];
 		else
 			avg -= soundBuffer[i];
 	}
-	avg /= FRAMES_PER_BUFFER;
-	avg *= 2;
-	//printf("Average: %f\n", avg);
+	avg /= FFT_INPUT_SIZE;
+	avg = pow(avg, 2);
+	avg *= 4096;
 
-	double r = color->R / 4095;
-	double g = color->G / 4095;
-	double b = color->B / 4095;
-
-	double scale = 1;
-
-	int biggest = 0;
-	if(g > r && g > b)
-		biggest += 1;
-	if(b > r && b > g)
-		biggest += 2;
-
-	switch(biggest)
-	{
-		case 0:
-			scale = 100 / r;
-			break;
-		case 1:
-			scale = 100 / g;
-			break;
-		case 2:
-			scale = 100 / b;
-			break;
-		default:
-			scale = 100;
-	}
+	double r = color->R / 4095.0;
+	double g = color->G / 4095.0;
+	double b = color->B / 4095.0;
 
 	for(int i = 0; i < NUM_LEDS; i++)
 	{
-		tempLeds[i]->R = color->R * avg;
-		tempLeds[i]->G = color->G * avg;
-		tempLeds[i]->B = color->B * avg;
+		tempLeds[i]->R = r * avg;
+		tempLeds[i]->G = g * avg;
+		tempLeds[i]->B = b * avg;
 	}
 }
 
-void dammitAnimation(double speed, double radius, double totalTime, odd_led_t* color, odd_led_t* tempLeds[NUM_LEDS])
+void dammitAnimation(double* params, double totalTime, odd_led_t* color, odd_led_t* tempLeds[NUM_LEDS])
 {
-	(void)speed;
-	(void)radius;
-	(void)totalTime;
+	(void)params;
 
-	int lowerBound = 0.0 * FRAMES_PER_BUFFER;
-	int upperBound = 0.05 * FRAMES_PER_BUFFER;
-	double freqsPerLed = (upperBound - lowerBound) * 1.0 / NUM_LEDS;
-	
-	SAMPLE soundBuffer[FRAMES_PER_BUFFER];
+	SAMPLE soundBuffer[FFT_OUTPUT_SIZE];
 	runFFT(soundBuffer);
-	printf("\n[");
-	for(int i = 0; i < NUM_LEDS; i++)
+	int binsPerLed = 20;
+	float ledsPerSection = NUM_LEDS / 9.0f;
+	
+	for(int i = 0; i < 9; i++)
 	{
-		int avg = 0;
-		for(int j = i * freqsPerLed + lowerBound; j < (i+1) * freqsPerLed + lowerBound; j++)
+		int lowerBin = 0;
+		int upperBin = 10;
+		switch(i)
 		{
-			//printf("%f,",soundBuffer[j]);
-			int temp = soundBuffer[j] * 30;
-			if(temp < 0)
-				temp *= -1;
-			avg += temp;
-			printf("%i,",temp);
+			case 0:
+				lowerBin = 0;
+				upperBin = 11;
+				break;
+			case 1:
+				lowerBin = 11;
+				upperBin = 22;
+				break;
+			case 2:
+				lowerBin = 22;
+				upperBin = 42;
+				break;
+			case 3:
+				lowerBin = 42;
+				upperBin = 74;
+				break;
+			case 4:
+				lowerBin = 74;
+				upperBin = 139;
+				break;
+			case 5:
+				lowerBin = 139;
+				upperBin = 416;
+				break;
+			case 6:
+				lowerBin = 416;
+				upperBin = 833;
+				break;
+			case 7:
+				lowerBin = 833;
+				upperBin = 1204;
+				break;
+			case 8:
+				lowerBin = 1204;
+				upperBin = 1481;
+				break;
 		}
-		avg /= freqsPerLed;
-		
-		avg = odd_pow(avg / 4096.0, 2) * 4096;
 
-		tempLeds[i]->R = avg;
-		tempLeds[i]->B = avg;
+
+		double avg = 0;
+		for(int j = lowerBin; j < upperBin; j++)
+		{
+		//	//printf("%i\n", j);
+			avg += soundBuffer[j] * 10;
+		}
+		avg /= upperBin - lowerBin;
+		avg *= pow((i + 1.0) / 2.0, 2);
+		avg = pow(avg / 4096.0, 2) * 4096;
+		tempLeds[2 * i + 1]->G = avg;
+		tempLeds[2 * i + 2]->G = avg;
+
+		double r = 0;
+		double g = 0;
+		double b = 0;
+		r = odd_remainder(totalTime, 3.0);
+		g = odd_remainder(totalTime + 1.0, 3.0);
+		b = odd_remainder(totalTime + 2.0, 3.0);
+
+		//r = r + 0.0;
+		//if(r < 0)
+		//	r *= -1;
+		printf("%f\n", r);
 	}
-	printf("]\n");
-	//printf("\n");
+
+
+
+	//float r = 0;
+	//float g = 0;
+	//float b = 0;
+	//float index = odd_remainder(totalTime, 6);
+	//r = abs(1.0-index) * -1 + 1;
+	//g = abs(3.0-index) * -1 + 1;
+	//b = abs(5.0-index) * -1 + 1;
+	//if(r < 0)
+	//	r = 0;
+	//if(g < 0)
+	//	g = 0;
+	//if(b < 0)
+	//	b = 0;
+	//r *= 4096;
+	//g *= 4096;
+	//b *= 4096;
+
+	//printf("%f, %f, %f\n", r, g, b);
+
+	//for(int i = 0; i < NUM_LEDS; i++) 
+	//{
+	//	float avg = 0;
+	//	for(int j = i * binsPerLed; j < (i + 1) * binsPerLed; j++)
+	//	{
+	//		int temp = soundBuffer[j] * 100;
+	//		if(temp < 0)
+	//			temp *= -1;
+	//		avg += temp;
+	//	}
+	//	avg /= binsPerLed;
+
+	//	avg = odd_pow(avg / 4096.0, 2) * 4096;
+
+	//	tempLeds[i]->R = avg;
+	//}
 }

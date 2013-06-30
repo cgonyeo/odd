@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <wiringPi.h>
 #include "tlc5947.h"
+#include <time.h>
 
 /*
  * Basic Use:
@@ -29,11 +30,10 @@
 #define XLAT 2
 #define BLANK 3
 
-#define DELAY 0
-
 int tlcleds[NUM_TLCS * 24];
 int xlat_needed = 0;
 int tlcDone = 0;
+struct timespec* sleepTime;
 
 //ledIndex >= 0 && ledIndex < NUM_TLCS * 24
 //value >= 0 && value < 4096
@@ -67,6 +67,7 @@ int getLedValue(int index)
 void pulsePin(int pin)
 {
 	digitalWrite(pin, 1);
+	//nanosleep(sleepTime, NULL);
 	digitalWrite(pin, 0);
 }
 
@@ -81,6 +82,11 @@ void tlc5947init()
 	pinMode(SCLK, OUTPUT);
 	pinMode(XLAT, OUTPUT);
 	pinMode(BLANK, OUTPUT);
+
+
+	sleepTime = malloc(sizeof(struct timespec));
+	sleepTime->tv_sec = 0;
+	sleepTime->tv_nsec = 5;
 }
 
 void tlc5947cleanup()
@@ -123,4 +129,5 @@ void updateLeds()
 	digitalWrite(BLANK, 1);
 	pulsePin(XLAT);
 	digitalWrite(BLANK, 0);
+//	usleep(500000);
 }

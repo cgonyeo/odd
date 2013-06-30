@@ -1,13 +1,14 @@
 #ifndef ODD_ANIMATIONS
 #define ODD_ANIMATIONS
 
-void cylonEye(double speed, double radius, double totalTime, odd_led_t* color, odd_led_t* tempLeds[NUM_LEDS]);
-void cylonEye_Linear(double speed, double radius, double totalTime, odd_led_t* color, odd_led_t* tempLeds[NUM_LEDS]);
-void strobe(double speed, double radius, double totalTime, odd_led_t* color, odd_led_t* tempLeds[NUM_LEDS]);
-void setAll(double speed, double radius, double totalTime, odd_led_t* color, odd_led_t* tempLeds[NUM_LEDS]);
-void smoothStrobe(double speed, double radius, double totalTime, odd_led_t* color, odd_led_t* tempLeds[NUM_LEDS]);
-void sinAnimation(double speed, double radius, double totalTime, odd_led_t* color, odd_led_t* tempLeds[NUM_LEDS]);
-void volumeAnimation(double speed, double radius, double totalTime, odd_led_t* color, odd_led_t* tempLeds[NUM_LEDS]);
-void dammitAnimation(double speed, double radius, double totalTime, odd_led_t* color, odd_led_t* tempLeds[NUM_LEDS]);
+int numParams(void (*function)(double*, double, odd_led_t*, odd_led_t *[NUM_LEDS]));
+void cylonEye(double* params, double totalTime, odd_led_t* color, odd_led_t* tempLeds[NUM_LEDS]);
+void cylonEye_Linear(double* params, double totalTime, odd_led_t* color, odd_led_t* tempLeds[NUM_LEDS]);
+void strobe(double* params, double totalTime, odd_led_t* color, odd_led_t* tempLeds[NUM_LEDS]);
+void setAll(double* params, double totalTime, odd_led_t* color, odd_led_t* tempLeds[NUM_LEDS]);
+void smoothStrobe(double* params, double totalTime, odd_led_t* color, odd_led_t* tempLeds[NUM_LEDS]);
+void sinAnimation(double* params, double totalTime, odd_led_t* color, odd_led_t* tempLeds[NUM_LEDS]);
+void volumeAnimation(double* params, double totalTime, odd_led_t* color, odd_led_t* tempLeds[NUM_LEDS]);
+void dammitAnimation(double* params, double totalTime, odd_led_t* color, odd_led_t* tempLeds[NUM_LEDS]);
 
 #endif

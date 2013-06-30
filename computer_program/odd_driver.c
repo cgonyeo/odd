@@ -39,7 +39,7 @@ animation_t* animations[50]; //All currently used animations.
 void write_console() {
 	printf("\n");
 	for(int i=0; i<NUM_LEDS; i++) {
-		printf("%d, ", leds[i]->R);
+		printf("%d, ", tempLeds[i]->G);
 		fflush(NULL);
 	}
 }
@@ -54,6 +54,8 @@ void write_odd() {
 			setLed(j * 24 + i*3+2, leds[j * 8 + i]->B);
 		}
 	updateLeds();
+	//write_console();
+	//sleep(1);
 }
 
 //Resets all LEDs to 0
@@ -68,22 +70,24 @@ void resetLeds()
 }
 
 //Adds an animation
-void addAnimation( void (*function)(double, double, double, odd_led_t*, odd_led_t *[NUM_LEDS]), double speed, double radius, odd_led_t* color, void (*modifier)( odd_led_t* leds[NUM_LEDS], odd_led_t *[NUM_LEDS] ))
+void addAnimation( void (*function)(double*, double, odd_led_t*, odd_led_t *[NUM_LEDS]), double* params, odd_led_t* color, void (*modifier)( odd_led_t* leds[NUM_LEDS], odd_led_t *[NUM_LEDS] ))
 {
-	animation_t* derp = malloc(sizeof(animation_t));
+	animation_t* derp;
+	if ((derp = malloc(sizeof(animation_t))) == NULL) {
+		fprintf(stderr, "Malloc failed");
+		exit(1);
+	}
 	derp->function = function;
-	derp->speed = speed;
-	derp->radius = radius;
+	derp->params = params;
 	derp->color = color;
 	derp->modifier = modifier;
 	animations[numAnimations++] = derp;
 }
 
 //Adds an animation
-void updateAnimation( int index, double speed, double radius, odd_led_t* color)
+void updateAnimation( int index, double* params, odd_led_t* color)
 {
-	animations[index]->speed = speed;
-	animations[index]->radius = radius;
+	animations[index]->params = params;
 	odd_led_t *temp = animations[index]->color;
 	animations[index]->color = color;
 	free(temp);
@@ -121,7 +125,7 @@ void *updateLoop(void *arg) {
 
 		for(int i = 0; i < numAnimations; i++)
 		{
-			animations[i]->function(animations[i]->speed, animations[i]->radius, totalTime, animations[i]->color, tempLeds);
+			animations[i]->function(animations[i]->params, totalTime, animations[i]->color, tempLeds);
 			animations[i]->modifier(leds, tempLeds);
 		}
 				
@@ -155,6 +159,18 @@ void getUserInput(char *buffer)
 		ch = getchar();
 	}
 	buffer[char_count] = 0x00;
+}
+
+int timesThisCharOccurs(char check, char *string)
+{
+	//printf("Checking string %s for number of %c's\n", string, check);
+	int count = 0;
+	for(int i = 0; string[i] != '\0'; i++)
+	{
+		if(string[i] == check)
+			count++;
+	}
+	return count;
 }
 
 void *networkListen(char *buffer)
@@ -214,7 +230,6 @@ void *networkListen(char *buffer)
 		}
 		printf("Received: %s\n", buffer);
 		
-		double speed = 0, radius = 0;
 		int r = 0, g = 0, b = 0;
 
 		char* temp = buffer;
@@ -227,10 +242,10 @@ void *networkListen(char *buffer)
 
 		while(line != NULL && strcmp(line,""))
 		{
-			printf("Line: '%s'\n", line);
+			//printf("Line: '%s'\n", line);
 			tok = strchr(line, ' ');
 			*tok++ = '\0';
-			printf("Tok: %s\n", tok);
+			//printf("Tok: '%s'\n", tok);
 			if(!strcmp(line,"exit"))
 			{
 				if(write(conn_s, "ok", 2) < 0)
@@ -306,8 +321,13 @@ void *networkListen(char *buffer)
 						else if(animations[i]->modifier == multiplyLeds)
 							temp2 = "multiply";
 
-						sprintf(reply, "%s%s %f %f %i %i %i %s !", reply, temp, animations[i]->speed, animations[i]->radius, animations[i]->color->R, animations[i]->color->G, animations[i]->color->B, temp2);
-						
+						sprintf(reply, "%s%s ", reply, temp);
+						for(int j = 0; j < numParams(animations[i]->function); j++)
+						{
+							sprintf(reply, "%s%f@", reply, animations[i]->params[j]);
+						}
+						sprintf(reply, "%s %i %i %i %s !", reply, animations[i]->color->R, animations[i]->color->G, animations[i]->color->B, temp2);
+
 					}
 
 					printf("Sending:%s\n", reply);
@@ -334,23 +354,42 @@ void *networkListen(char *buffer)
 					printf("Error writing\n");
 					exit(EXIT_FAILURE);
 				}
+
+				//printf("Animation stuff\n------------------------------------\n)");
 				
 				char* animName = line;
+				//printf("animName: %s\n", animName);
 
-				char* speedc = tok;//strchr(animName,' ');
-				//*speedc++ = '\0';
+				char* temp = tok;
+				//printf("Temp: '%s'\n", temp);
+				//*temp++ = '\0';
 				
-				char* radiusc = strchr(speedc, ' ');
-				*radiusc++ = '\0';
+				int numParams = timesThisCharOccurs('@', tok);
+				double params[numParams];
+				//printf("Making the params, should be %i params\n", numParams);
+
+				for(int i = 0; i < numParams; i++)
+				{
+					char* firstAt;
+					//printf("Temp is now: '%s'\n", temp);
+					params[i] = strtod(temp, &firstAt);
+					//printf("Parameter %i is %f\n", i, params[i]);
+					temp = firstAt + 1;
+				}
 				
-				char* rc = strchr(radiusc, ' ');
+				//printf("Temp is now: '%s'\n", temp);
+
+				char* rc = temp;
 				*rc++ = '\0';
+				//printf("rc: %s\n", rc);
 				
 				char* gc = strchr(rc, ' ');
 				*gc++ = '\0';
+				//printf("gc: %s\n", gc);
 				
 				char* bc = strchr(gc, ' ');
 				*bc++ = '\0';
+				//printf("bc: %s\n", bc);
 				
 				char* modifier = strchr(bc, ' ');
 				*modifier++ = '\0';
@@ -358,16 +397,9 @@ void *networkListen(char *buffer)
 				char* endSpace = strchr(modifier, ' ');
 				*endSpace++ = '\0';
 
-				speed = strtod(speedc, NULL);
-				radius = strtod(radiusc,NULL);
 				r = atoi(rc);
 				g = atoi(gc);
 				b = atoi(bc);
-
-				if(speed < 0)
-					speed = 0;
-				if(radius < 0)
-					radius = 0;
 
 				if(r < 0)
 					r = 0;
@@ -382,11 +414,11 @@ void *networkListen(char *buffer)
 				if(g > 4095)
 					g = 4095;
 				
-				void(*animation_function)(double, double, double, odd_led_t*, odd_led_t *[NUM_LEDS]) = NULL;
+				void(*animation_function)(double*, double, odd_led_t*, odd_led_t *[NUM_LEDS]) = NULL;
 				void(*animation_modifier)( odd_led_t* leds[NUM_LEDS], odd_led_t *[NUM_LEDS] ) = NULL;
 				if(!strcmp(animName,"cyloneye"))
 					animation_function = cylonEye;
-				if(!strcmp(animName, "cyloneye -l"))
+				if(!strcmp(animName, "cyloneye-l"))
 					animation_function = cylonEye_Linear;
 				if(!strcmp(animName,"strobe"))
 					animation_function = strobe;
@@ -411,26 +443,40 @@ void *networkListen(char *buffer)
 				color->B = b;
 			
 				printf("Animation: '%s'\n",animName);
-				printf("Speed: '%f'\n",speed);
-				printf("Radius: '%f'\n",radius);
+				printf("Speed: '%f'\n",params[0]);
+				printf("Radius: '%f'\n",params[1]);
 				printf("R: '%i'\n",color->R);
 				printf("G: '%i'\n",color->G);
 				printf("B: '%i'\n",color->B);
 				printf("Modifier: '%s'\n",modifier);
 
 				if (!strcmp(animName, "update"))
-					updateAnimation(atoi(modifier), speed, radius, color);
+				{
+					updateAnimation(atoi(modifier), params, color);
+				}
 				else if(animation_function == NULL || animation_modifier == NULL)
 					printf("Bad input?!\n");
 				else
-					addAnimation(animation_function,speed,radius,color,animation_modifier);
+				{
+					//printf("Animations: %i\n" , numAnimations);
+					addAnimation(animation_function,params,color,animation_modifier);
+					//printf("Animations: %i\n" , numAnimations);
+				}
 				
+				//printf("<->\n");
+				//printf("Speed: '%f'\n",animations[numAnimations - 1]->params[0]);
+				//printf("Radius: '%f'\n",animations[numAnimations - 1]->params[1]);
+				//printf("R: '%i'\n",animations[numAnimations - 1]->color->R);
+				//printf("G: '%i'\n",animations[numAnimations - 1]->color->G);
+				//printf("B: '%i'\n",animations[numAnimations - 1]->color->B);
 
 			}
 			line = temp;
 			temp = strchr(buffer, '!');
 			if(temp != NULL)
 				*temp++ = '\0';
+
+			//printf("Done and stuff\n");
 		}
 	}
 	
@@ -463,13 +509,90 @@ int main(void)
 
 	audioInitialization();
 
-	odd_led_t* color = malloc(sizeof(odd_led_t));
-	color->R = 100;
-	color->G = 0;
-	color->B = 0;
+	//odd_led_t* color = malloc(sizeof(odd_led_t));
+	//color->R = 150;
+	//color->G = 0;
+	//color->B = 0;
+	//
+	//double params[2];
+	//params[0] = 0.5;
+	//params[1] = 13;
 
-	addAnimation(dammitAnimation, 0.05, 0.5, color, addLeds);
+	//addAnimation(cylonEye, params, color, addLeds);
+
+	//odd_led_t* color2 = malloc(sizeof(odd_led_t));
+	//color2->R = 0;
+	//color2->G = 150;
+	//color2->B = 0;
+	//
+	//double params2[2];
+	//params2[0] = 0.45;
+	//params2[1] = 13;
+
+	//addAnimation(cylonEye, params2, color2, addLeds);
+
+	odd_led_t* color3 = malloc(sizeof(odd_led_t));
+	color3->R = 4096;
+	color3->G = 0;
+	color3->B = 2000;
 	
+	double params3[2];
+	params3[0] = 1;
+	params3[1] = 3;
+
+	addAnimation(dammitAnimation, params3, color3, addLeds);
+
+	//odd_led_t* color5 = malloc(sizeof(odd_led_t));
+	//color5->R = 100;
+	//color5->G = 0;
+	//color5->B = 0;
+	//
+	//double params5[2];
+	//params5[0] = 0.5;
+	//params5[1] = 5;
+
+	//addAnimation(dammitAnimation, params5, color5, addLeds);
+
+	/*odd_led_t* color4 = malloc(sizeof(odd_led_t));
+	color4->R = 150;
+	color4->G = 150;
+	color4->B = 150;
+
+	double params4[1];
+	params4[0] = 0.03;
+
+	addAnimation(smoothStrobe, params4, color4, subtractLeds);*/
+
+
+	/*odd_led_t* color1 = malloc(sizeof(odd_led_t));
+	color1->R = 0;
+	color1->G = 100;
+	color1->B = 0;
+	
+	double params1[1];
+	params1[0] = 0.5;
+
+	addAnimation(smoothStrobe, params1, color1, addLeds);
+
+	odd_led_t* color2 = malloc(sizeof(odd_led_t));
+	color2->R = 100;
+	color2->G = 100;
+	color2->B = 100;
+	
+	double params2[1];
+	params2[0] = 20;
+
+	addAnimation(strobe, params2, color2, addLeds);
+
+	odd_led_t* color3 = malloc(sizeof(odd_led_t));
+	color3->R = 0;
+	color3->G = 0;
+	color3->B = 100;
+	
+	double params3[0];
+
+	addAnimation(setAll, params3, color3, addLeds);
+	*/
 	networkListen(input);
 	printf("Exiting...\n");
 	done = 1;

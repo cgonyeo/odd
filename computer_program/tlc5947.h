@@ -1,7 +1,7 @@
 #ifndef TLC5947_DRIVER
 #define TLC5947_DRIVER
 
-#define NUM_TLCS 2
+#define NUM_TLCS 3
 void setLed(int ledIndex, int value);
 void setAllLeds(int value);
 void clearLeds();

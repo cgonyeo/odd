@@ -3,7 +3,7 @@
 #ifndef ODD_DATA_TYPES
 #define ODD_DATA_TYPES
 
-#define NUM_LEDS ((NUM_TLCS * 24) / 3)
+#define NUM_LEDS NUM_TLCS * 8
 
 //Used to represent a single LED
 typedef struct {
@@ -14,10 +14,9 @@ typedef struct {
 
 //Holds the parameters for a single animation
 typedef struct {
-	void (*function)(double, double, double, odd_led_t*, odd_led_t *[NUM_LEDS]);
+	void (*function)(double*, double, odd_led_t*, odd_led_t *[NUM_LEDS]);
 	void (*modifier)( odd_led_t *[NUM_LEDS], odd_led_t *[NUM_LEDS] );
-	double speed;
-	double radius;
+	double* params;
 	odd_led_t* color;
 } animation_t;
 
