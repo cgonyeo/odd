@@ -14,12 +14,12 @@ typedef float SAMPLE;
 
 void getSoundBuffer(SAMPLE* buf);
 void runFFT(SAMPLE* buf);
-static int recordCallback( const void *inputBuffer, void *outputBuffer,
+int recordCallback( const void *inputBuffer, void *outputBuffer,
 			unsigned long framesPerBuffer, 
 			const PaStreamCallbackTimeInfo* timeInfo,
 			PaStreamCallbackFlags statusFlags,
 			void *userData );
-void audioInitialization();
-void audioStop();
+void audioInitialization(void);
+void audioStop(void);
 
 #endif

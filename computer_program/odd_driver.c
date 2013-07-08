@@ -36,7 +36,7 @@ odd_led_t* tempLeds[NUM_LEDS]; //Current alterations to the LEDs, used with anim
 animation_t* animations[50]; //All currently used animations.
 
 //Writes the led array to the console
-void write_console() {
+void write_console(void) {
 	printf("\n");
 	for(int i=0; i<NUM_LEDS; i++) {
 		printf("%d, ", tempLeds[i]->G);
@@ -45,7 +45,7 @@ void write_console() {
 }
 
 //Sends the news LED values to the hardware
-void write_odd() {
+void write_odd(void) {
 	for(int j = 0; j < NUM_TLCS; j++)
 		for(int i = 0; i < 8; i++)
 		{
@@ -59,7 +59,7 @@ void write_odd() {
 }
 
 //Resets all LEDs to 0
-void resetLeds()
+void resetLeds(void)
 {
 	for(int i = 0; i < NUM_LEDS; i++)
 	{
@@ -140,7 +140,7 @@ void *updateLoop(void *arg) {
 	return NULL;
 }
 
-void flushInput()
+void flushInput(void)
 {
 	char c = 'f';
 	while((c = getchar()) != '\n' && c != EOF);
@@ -540,7 +540,7 @@ int main(void)
 	params3[0] = 1;
 	params3[1] = 3;
 
-	addAnimation(dammitAnimation, params3, color3, addLeds);
+	addAnimation(cylonEye, params3, color3, addLeds);
 
 	//odd_led_t* color5 = malloc(sizeof(odd_led_t));
 	//color5->R = 100;

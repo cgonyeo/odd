@@ -51,7 +51,7 @@ void setAllLeds(int value)
 			tlcleds[i] = value;
 }
 
-void clearLeds()
+void clearLeds(void)
 {
 	setAllLeds(0);
 }
@@ -67,11 +67,11 @@ int getLedValue(int index)
 void pulsePin(int pin)
 {
 	digitalWrite(pin, 1);
-	//nanosleep(sleepTime, NULL);
+	nanosleep(sleepTime, NULL);
 	digitalWrite(pin, 0);
 }
 
-void tlc5947init()
+void tlc5947init(void)
 {
 	if(wiringPiSetup() == -1)
 		printf("Wiring setup failed!\n");
@@ -86,10 +86,10 @@ void tlc5947init()
 
 	sleepTime = malloc(sizeof(struct timespec));
 	sleepTime->tv_sec = 0;
-	sleepTime->tv_nsec = 5;
+	sleepTime->tv_nsec = 10;
 }
 
-void tlc5947cleanup()
+void tlc5947cleanup(void)
 {
 	setAllLeds(0);
 	updateLeds();
@@ -97,7 +97,7 @@ void tlc5947cleanup()
 	tlcDone = 1;
 }
 
-void updateLeds()
+void updateLeds(void)
 {
 	for(int i = NUM_TLCS * 24 - 1; i >= 0; i--)
 	{

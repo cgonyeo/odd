@@ -34,7 +34,7 @@ void runFFT(SAMPLE* buf)
 	//("runFFT finished\n");
 }
 
-static int recordCallback( const void *inputBuffer, void *outputBuffer,
+int recordCallback( const void *inputBuffer, void *outputBuffer,
 			unsigned long framesPerBuffer, 
 			const PaStreamCallbackTimeInfo* timeInfo,
 			PaStreamCallbackFlags statusFlags,
@@ -64,8 +64,9 @@ static int recordCallback( const void *inputBuffer, void *outputBuffer,
 	return paContinue;
 }
 
-void audioInitialization()
+void audioInitialization(void)
 {
+	plan=(void*)0;
 	PaStreamParameters inputParameters;
 	PaError err = paNoError;
 	
@@ -129,18 +130,19 @@ void audioInitialization()
 
 	in = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * FFT_INPUT_SIZE);
 	out = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * FFT_INPUT_SIZE);
-
+	puts ("HERPLE");
 	for(int i = 0; i < FFT_INPUT_SIZE; i++)
 	{
 		in[i][0] = 0;
 		in[i][1] = 0;
 	}
 
+	puts("DERP");
 	plan = fftw_plan_dft_1d(FFT_INPUT_SIZE, in, out, FFTW_FORWARD, FFTW_MEASURE);
 	printf("FFT initialization complete\n");
 }
 
-void audioStop()
+void audioStop(void)
 {
 	PaError err = paNoError;
 	err = Pa_CloseStream(stream);
