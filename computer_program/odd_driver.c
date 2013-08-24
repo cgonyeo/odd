@@ -63,7 +63,9 @@ void resetLeds(void)
 {
 	for(int i = 0; i < NUM_LEDS; i++)
 	{
-		leds[i]->R = 0;
+		odd_led_t *led = leds[i];
+		led->R = 0;
+		//leds[i]->R = 0;
 		leds[i]->G = 0;
 		leds[i]->B = 0;
 	}
@@ -175,6 +177,7 @@ int timesThisCharOccurs(char check, char *string)
 
 void *networkListen(char *buffer)
 {
+	/*
 	int list_s;		//Listening socket
 	int conn_s;		//connection socket
 	short int port = INCPORT;	//port number
@@ -362,7 +365,7 @@ void *networkListen(char *buffer)
 
 				char* temp = tok;
 				//printf("Temp: '%s'\n", temp);
-				//*temp++ = '\0';
+				// *temp++ = '\0';
 				
 				int numParams = timesThisCharOccurs('@', tok);
 				double params[numParams];
@@ -486,113 +489,100 @@ void *networkListen(char *buffer)
 		exit(EXIT_FAILURE);
 	}
 	return NULL;
+	*/
+	while(1)
+	{
+		int hi = 0;
+		hi += 1;
+		hi = hi % 1000;
+	}
 }
 
 int main(void)
 {
-	//Start the thread that updates our LEDs
-	pthread_t ul;
-	pthread_create(&ul,NULL,updateLoop,"randomargs");
-	
-	printf("ODD started.\n");
-	
 	for(int i = 0; i < NUM_LEDS; i++)
 	{
 		leds[i] = malloc(sizeof(odd_led_t));
 		tempLeds[i] = malloc(sizeof(odd_led_t));
 	}
 	
+	//Start the thread that updates our LEDs
+	pthread_t ul;
+	pthread_create(&ul,NULL,updateLoop,"randomargs");
+	
+	printf("ODD started.\n");
+	
 	char input[255];
 	input[0] = '\0';
 
 	tlc5947init();
 
-	audioInitialization();
+	//audioInitialization();
 
-	//odd_led_t* color = malloc(sizeof(odd_led_t));
-	//color->R = 150;
-	//color->G = 0;
-	//color->B = 0;
-	//
-	//double params[2];
-	//params[0] = 0.5;
-	//params[1] = 13;
+	odd_led_t* color = malloc(sizeof(odd_led_t));
+	color->R = 40;
+	color->G = 0;
+	color->B = 0;
+	
+	double params[2];
+	params[0] = 50;
+	params[1] = 1;
 
-	//addAnimation(cylonEye, params, color, addLeds);
+	addAnimation(strobe, params, color, addLeds);
 
 	//odd_led_t* color2 = malloc(sizeof(odd_led_t));
 	//color2->R = 0;
-	//color2->G = 150;
+	//color2->G = 4096;
 	//color2->B = 0;
 	//
 	//double params2[2];
 	//params2[0] = 0.45;
-	//params2[1] = 13;
+	//params2[1] = 10;
 
 	//addAnimation(cylonEye, params2, color2, addLeds);
 
-	odd_led_t* color3 = malloc(sizeof(odd_led_t));
-	color3->R = 4096;
-	color3->G = 0;
-	color3->B = 2000;
-	
-	double params3[2];
-	params3[0] = 1;
-	params3[1] = 3;
+	//odd_led_t* color3 = malloc(sizeof(odd_led_t));
+	//color3->R = 0;
+	//color3->G = 0;
+	//color3->B = 4096;
+	//
+	//double params3[2];
+	//params3[0] = 0.4;
+	//params3[1] = 10;
 
-	addAnimation(cylonEye, params3, color3, addLeds);
+	//addAnimation(cylonEye, params3, color3, addLeds);
 
 	//odd_led_t* color5 = malloc(sizeof(odd_led_t));
-	//color5->R = 100;
-	//color5->G = 0;
-	//color5->B = 0;
+	//color5->R = 500;
+	//color5->G = 500;
+	//color5->B = 500;
 	//
 	//double params5[2];
 	//params5[0] = 0.5;
-	//params5[1] = 5;
+	//params5[1] = 200;
 
-	//addAnimation(dammitAnimation, params5, color5, addLeds);
+	//addAnimation(smoothStrobe, params5, color5, subtractLeds);
 
-	/*odd_led_t* color4 = malloc(sizeof(odd_led_t));
-	color4->R = 150;
-	color4->G = 150;
-	color4->B = 150;
+	//odd_led_t* color4 = malloc(sizeof(odd_led_t));
+	//color4->R = 0;
+	//color4->G = 300;
+	//color4->B = 300;
 
-	double params4[1];
-	params4[0] = 0.03;
+	//double params4[1];
+	//params4[0] = 0.3;
 
-	addAnimation(smoothStrobe, params4, color4, subtractLeds);*/
+	//addAnimation(smoothStrobe, params4, color4, addLeds);
 
+	//odd_led_t* color6 = malloc(sizeof(odd_led_t));
+	//color6->R = 300;
+	//color6->G = 0;
+	//color6->B = 300;
 
-	/*odd_led_t* color1 = malloc(sizeof(odd_led_t));
-	color1->R = 0;
-	color1->G = 100;
-	color1->B = 0;
-	
-	double params1[1];
-	params1[0] = 0.5;
+	//double params6[1];
+	//params6[0] = 0.25;
 
-	addAnimation(smoothStrobe, params1, color1, addLeds);
+	//addAnimation(smoothStrobe, params6, color6, addLeds);
 
-	odd_led_t* color2 = malloc(sizeof(odd_led_t));
-	color2->R = 100;
-	color2->G = 100;
-	color2->B = 100;
-	
-	double params2[1];
-	params2[0] = 20;
-
-	addAnimation(strobe, params2, color2, addLeds);
-
-	odd_led_t* color3 = malloc(sizeof(odd_led_t));
-	color3->R = 0;
-	color3->G = 0;
-	color3->B = 100;
-	
-	double params3[0];
-
-	addAnimation(setAll, params3, color3, addLeds);
-	*/
 	networkListen(input);
 	printf("Exiting...\n");
 	done = 1;

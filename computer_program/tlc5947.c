@@ -64,10 +64,17 @@ int getLedValue(int index)
 	return -1;
 }
 
+void delayStuff() 
+{
+	for(int i = 0; i < 100; i++)
+		__asm__ ("nop");
+}
+
 void pulsePin(int pin)
 {
 	digitalWrite(pin, 1);
-	nanosleep(sleepTime, NULL);
+	delayStuff();
+	//nanosleep(sleepTime, NULL);
 	digitalWrite(pin, 0);
 }
 
@@ -86,7 +93,7 @@ void tlc5947init(void)
 
 	sleepTime = malloc(sizeof(struct timespec));
 	sleepTime->tv_sec = 0;
-	sleepTime->tv_nsec = 10;
+	sleepTime->tv_nsec = 50;
 }
 
 void tlc5947cleanup(void)
@@ -102,28 +109,40 @@ void updateLeds(void)
 	for(int i = NUM_TLCS * 24 - 1; i >= 0; i--)
 	{
 		digitalWrite(SIN, tlcleds[i] & 2048);
+		delayStuff();
 		pulsePin(SCLK);
 		digitalWrite(SIN, tlcleds[i] & 1024);
+		delayStuff();
 		pulsePin(SCLK);
 		digitalWrite(SIN, tlcleds[i] & 512);
+		delayStuff();
 		pulsePin(SCLK);
 		digitalWrite(SIN, tlcleds[i] & 256);
+		delayStuff();
 		pulsePin(SCLK);
 		digitalWrite(SIN, tlcleds[i] & 128);
+		delayStuff();
 		pulsePin(SCLK);
 		digitalWrite(SIN, tlcleds[i] & 64);
+		delayStuff();
 		pulsePin(SCLK);
 		digitalWrite(SIN, tlcleds[i] & 32);
+		delayStuff();
 		pulsePin(SCLK);
 		digitalWrite(SIN, tlcleds[i] & 16);
+		delayStuff();
 		pulsePin(SCLK);
 		digitalWrite(SIN, tlcleds[i] & 8);
+		delayStuff();
 		pulsePin(SCLK);
 		digitalWrite(SIN, tlcleds[i] & 4);
+		delayStuff();
 		pulsePin(SCLK);
 		digitalWrite(SIN, tlcleds[i] & 2);
+		delayStuff();
 		pulsePin(SCLK);
 		digitalWrite(SIN, tlcleds[i] & 1);
+		delayStuff();
 		pulsePin(SCLK);
 	}
 	digitalWrite(BLANK, 1);

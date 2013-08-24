@@ -73,18 +73,18 @@ void audioInitialization(void)
 	err = Pa_Initialize();
 	if(err != paNoError)
 	{
-		printf("Error calling PaInitialize (line 198)\n");
+		printf("Error calling PaInitialize\n");
 		exit(EXIT_FAILURE);
 	}
 	
-	printf("Getting devices...\n");
-	const PaDeviceInfo *deviceInfo;
-	int numDevices = Pa_GetDeviceCount();
-	for(int i = 0; i < numDevices; i++)
-	{
-		deviceInfo = Pa_GetDeviceInfo(i);
-		printf("Device: %s\n", deviceInfo->name);
-	}
+	//printf("Getting devices...\n");
+	//const PaDeviceInfo *deviceInfo;
+	//int numDevices = Pa_GetDeviceCount();
+	//for(int i = 0; i < numDevices; i++)
+	//{
+	//	deviceInfo = Pa_GetDeviceInfo(i);
+	//	//printf("Device: %s\n", deviceInfo->name);
+	//}
 
 	inputParameters.device = Pa_GetDefaultInputDevice();
 	if(inputParameters.device == paNoDevice)
@@ -130,14 +130,12 @@ void audioInitialization(void)
 
 	in = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * FFT_INPUT_SIZE);
 	out = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * FFT_INPUT_SIZE);
-	puts ("HERPLE");
 	for(int i = 0; i < FFT_INPUT_SIZE; i++)
 	{
 		in[i][0] = 0;
 		in[i][1] = 0;
 	}
 
-	puts("DERP");
 	plan = fftw_plan_dft_1d(FFT_INPUT_SIZE, in, out, FFTW_FORWARD, FFTW_MEASURE);
 	printf("FFT initialization complete\n");
 }

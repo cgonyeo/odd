@@ -309,7 +309,6 @@ void dammitAnimation(double* params, double totalTime, odd_led_t* color, odd_led
 		double avg = 0;
 		for(int j = lowerBin; j < upperBin; j++)
 		{
-		//	//printf("%i\n", j);
 			avg += soundBuffer[j] * 10;
 		}
 		avg /= upperBin - lowerBin;
@@ -318,17 +317,19 @@ void dammitAnimation(double* params, double totalTime, odd_led_t* color, odd_led
 		tempLeds[2 * i + 1]->G = avg;
 		tempLeds[2 * i + 2]->G = avg;
 
-		double r = 0;
-		double g = 0;
-		double b = 0;
-		r = odd_remainder(totalTime, 3.0);
-		g = odd_remainder(totalTime + 1.0, 3.0);
-		b = odd_remainder(totalTime + 2.0, 3.0);
+		//double r = 0;
+		//double g = 0;
+		//double b = 0;
+		//r = odd_remainder(totalTime, 3.0);
+		//g = odd_remainder(totalTime + 1.0, 3.0);
+		//b = odd_remainder(totalTime + 2.0, 3.0);
 
-		//r = r + 0.0;
 		//if(r < 0)
 		//	r *= -1;
-		printf("%f\n", r);
+		//if(g < 0)
+		//	g *= -1;
+		//if(b < 0)
+		//	b *= -1;
 	}
 
 
