@@ -17,18 +17,18 @@
  *
  * Pin Mapping:
  * 
- * 0 -> SIN
- * 4 -> SCLK
- * 2 -> XLAT
- * 3 -> BLANK
+ * 0(17) -> SIN
+ * 4(23) -> SCLK
+ * 2(27) -> XLAT
+ * 3(22) -> BLANK
  *
  * Note: The above follows WiringPi's numbering convention, just google it or something.
  */
 
-#define SIN 0
-#define SCLK 4
-#define XLAT 2
-#define BLANK 3
+#define SIN 17
+#define SCLK 23
+#define XLAT 27
+#define BLANK 22
 
 int tlcleds[NUM_TLCS * 24];
 int xlat_needed = 0;
@@ -37,116 +37,99 @@ struct timespec* sleepTime;
 
 //ledIndex >= 0 && ledIndex < NUM_TLCS * 24
 //value >= 0 && value < 4096
-void setLed(int ledIndex, int value)
+void tlcSetLed(int ledIndex, int value)
 {
-	if(ledIndex >= 0 && ledIndex < NUM_TLCS * 24 && value >= 0 && value < 4096)
-		tlcleds[ledIndex] = value;
+    if(ledIndex >= 0 && ledIndex < NUM_TLCS * 24 && value >= 0 && value < 4096)
+        tlcleds[ledIndex] = value;
 }
 
 //value >= 0 && value < 4096
-void setAllLeds(int value)
+void tlcSetAllLeds(int value)
 {
-	if(value >= 0 && value < 4096)
-		for(int i = 0; i < NUM_TLCS * 24; i++)
-			tlcleds[i] = value;
+    if(value >= 0 && value < 4096)
+        for(int i = 0; i < NUM_TLCS * 24; i++)
+            tlcleds[i] = value;
 }
 
-void clearLeds(void)
+void tlcClearLeds(void)
 {
-	setAllLeds(0);
+    tlcSetAllLeds(0);
 }
 
 //index >= 0 && index < NUM_TLCS * 24
-int getLedValue(int index)
+int tlcGetLedValue(int index)
 {
-	if(index >= 0 && index < NUM_TLCS * 24)
-		return index;
-	return -1;
+    if(index >= 0 && index < NUM_TLCS * 24)
+        return index;
+    return -1;
 }
 
 void delayStuff() 
 {
-	for(int i = 0; i < 100; i++)
-		__asm__ ("nop");
+    for(int i = 0; i < 100; i++)
+        __asm__ ("nop");
 }
 
-void pulsePin(int pin)
+void tlcPulsePin(int pin)
 {
-	digitalWrite(pin, 1);
-	delayStuff();
-	//nanosleep(sleepTime, NULL);
-	digitalWrite(pin, 0);
+    digitalWrite(pin, 1);
+    delayStuff();
+    //nanosleep(sleepTime, NULL);
+    digitalWrite(pin, 0);
 }
 
 void tlc5947init(void)
 {
-	if(wiringPiSetup() == -1)
-		printf("Wiring setup failed!\n");
-	
-	memset(&tlcleds, 0, sizeof(int));
+    char *buffer = malloc(sizeof(char)*60);
+    sprintf(buffer, "gpio export %d out", SIN);
+    if(system(buffer) == -1)
+        printf("Wiring setup failed!\n");
+    sprintf(buffer, "gpio export %d out", SCLK);
+    if(system(buffer) == -1)
+        printf("Wiring setup failed!\n");
+    sprintf(buffer, "gpio export %d out", XLAT);
+    if(system(buffer) == -1)
+        printf("Wiring setup failed!\n");
+    sprintf(buffer, "gpio export %d out", BLANK);
+    if(system(buffer) == -1)
+        printf("Wiring setup failed!\n");
+    if(wiringPiSetupSys() == -1)
+        printf("Wiring setup failed!\n");
+    
+    memset(&tlcleds, 0, sizeof(int));
+    free(buffer);
 
-	pinMode(SIN, OUTPUT);
-	pinMode(SCLK, OUTPUT);
-	pinMode(XLAT, OUTPUT);
-	pinMode(BLANK, OUTPUT);
+    //pinMode(SIN, OUTPUT);
+    //pinMode(SCLK, OUTPUT);
+    //pinMode(XLAT, OUTPUT);
+    //pinMode(BLANK, OUTPUT);
 
 
-	sleepTime = malloc(sizeof(struct timespec));
-	sleepTime->tv_sec = 0;
-	sleepTime->tv_nsec = 50;
+    sleepTime = malloc(sizeof(struct timespec));
+    sleepTime->tv_sec = 0;
+    sleepTime->tv_nsec = 5;
 }
 
 void tlc5947cleanup(void)
 {
-	setAllLeds(0);
-	updateLeds();
+    tlcSetAllLeds(0);
+    tlcUpdateLeds();
 
-	tlcDone = 1;
+    tlcDone = 1;
 }
 
-void updateLeds(void)
+void tlcUpdateLeds(void)
 {
-	for(int i = NUM_TLCS * 24 - 1; i >= 0; i--)
-	{
-		digitalWrite(SIN, tlcleds[i] & 2048);
-		delayStuff();
-		pulsePin(SCLK);
-		digitalWrite(SIN, tlcleds[i] & 1024);
-		delayStuff();
-		pulsePin(SCLK);
-		digitalWrite(SIN, tlcleds[i] & 512);
-		delayStuff();
-		pulsePin(SCLK);
-		digitalWrite(SIN, tlcleds[i] & 256);
-		delayStuff();
-		pulsePin(SCLK);
-		digitalWrite(SIN, tlcleds[i] & 128);
-		delayStuff();
-		pulsePin(SCLK);
-		digitalWrite(SIN, tlcleds[i] & 64);
-		delayStuff();
-		pulsePin(SCLK);
-		digitalWrite(SIN, tlcleds[i] & 32);
-		delayStuff();
-		pulsePin(SCLK);
-		digitalWrite(SIN, tlcleds[i] & 16);
-		delayStuff();
-		pulsePin(SCLK);
-		digitalWrite(SIN, tlcleds[i] & 8);
-		delayStuff();
-		pulsePin(SCLK);
-		digitalWrite(SIN, tlcleds[i] & 4);
-		delayStuff();
-		pulsePin(SCLK);
-		digitalWrite(SIN, tlcleds[i] & 2);
-		delayStuff();
-		pulsePin(SCLK);
-		digitalWrite(SIN, tlcleds[i] & 1);
-		delayStuff();
-		pulsePin(SCLK);
-	}
-	digitalWrite(BLANK, 1);
-	pulsePin(XLAT);
-	digitalWrite(BLANK, 0);
-//	usleep(500000);
+    for(int i = NUM_TLCS * 24 - 1; i >= 0; i--)
+    {
+        for(int j = 2048; j > 0; j /= 2)
+        {
+            digitalWrite(SIN, tlcleds[i] & j);
+            delayStuff();
+            tlcPulsePin(SCLK);
+        }
+    }
+    digitalWrite(BLANK, 1);
+    tlcPulsePin(XLAT);
+    digitalWrite(BLANK, 0);
 }

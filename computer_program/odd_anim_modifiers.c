@@ -1,34 +1,16 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <sys/time.h>
-#include <pthread.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <errno.h>
-#include <arpa/inet.h>
-#include <sys/types.h>
-#include <netinet/in.h>
-#include <sys/socket.h>
-#include "portaudio.h"
-#include "odd_data_types.h"
-#include "odd_math.h"
-#include "odd_animations.h"
-#include "odd_anim_modifiers.h"
+#include "odd.h"
 
 //Inverts all channels on the temp LEDS.
 //For example:
 //4095 -> 0
 //0 -> 4095
-void invertTempLeds(odd_led_t* leds[NUM_LEDS], odd_led_t* tempLeds[NUM_LEDS])
+void invertTempLeds()
 {
 	for(int i = 0; i < NUM_LEDS; i++)
 	{
-		tempLeds[i]->R = 4095 - tempLeds[i]->R;
-		tempLeds[i]->G = 4095 - tempLeds[i]->G;
-		tempLeds[i]->B = 4095 - tempLeds[i]->B;
+        setTempLED(i, 'r', 4095 - getTempLED(i, 'r'));
+        setTempLED(i, 'g', 4095 - getTempLED(i, 'g'));
+        setTempLED(i, 'b', 4095 - getTempLED(i, 'b'));
 	}
 }
 
@@ -37,20 +19,20 @@ void addLeds(odd_led_t* leds[NUM_LEDS], odd_led_t* tempLeds[NUM_LEDS])
 {
 	for(int i = 0; i < NUM_LEDS; i++)
 	{
-		if(leds[i]->R + tempLeds[i]->R > 4095)
-			leds[i]->R = 4095;
+		if(getLED(i, 'r') + getTempLED(i, 'r') > 4095)
+            setLED(i, 'r', 4095);
 		else
-			leds[i]->R += tempLeds[i]->R;
+            setLED(i, 'r', getLED(i, 'r') + getTempLED(i, 'r'));
 		
-		if(leds[i]->G + tempLeds[i]->G > 4095)
-			leds[i]->G = 4095;
+		if(getLED(i, 'g') + getTempLED(i, 'g') > 4095)
+            setLED(i, 'g', 4095);
 		else
-			leds[i]->G += tempLeds[i]->G;
+            setLED(i, 'g', getLED(i, 'g') + getTempLED(i, 'g'));
 		
-		if(leds[i]->B + tempLeds[i]->B > 4095)
-			leds[i]->B = 4095;
+		if(getLED(i, 'b') + getTempLED(i, 'b') > 4095)
+            setLED(i, 'b', 4095);
 		else
-			leds[i]->B += tempLeds[i]->B;
+            setLED(i, 'b', getLED(i, 'b') + getTempLED(i, 'b'));
 	}
 }
 
@@ -59,20 +41,20 @@ void subtractLeds(odd_led_t* leds[NUM_LEDS], odd_led_t* tempLeds[NUM_LEDS])
 {
 	for(int i = 0; i < NUM_LEDS; i++)
 	{
-		if(leds[i]->R - tempLeds[i]->R < 0)
-			leds[i]->R = 0;
+		if(getLED(i, 'r') - getTempLED(i, 'r') < 0)
+            setLED(i, 'r', 0);
 		else
-			leds[i]->R -= tempLeds[i]->R;
+            setLED(i, 'r', getLED(i, 'r') - getTempLED(i, 'r'));
 		
-		if(leds[i]->G - tempLeds[i]->G < 0)
-			leds[i]->G = 0;
+		if(getLED(i, 'g') - getTempLED(i, 'g') < 0)
+            setLED(i, 'g', 0);
 		else
-			leds[i]->G -= tempLeds[i]->G;
+            setLED(i, 'g', getLED(i, 'g') - getTempLED(i, 'g'));
 		
-		if(leds[i]->B - tempLeds[i]->B < 0)
-			leds[i]->B = 0;
+		if(getLED(i, 'b') - getTempLED(i, 'b') < 0)
+            setLED(i, 'b', 0);
 		else
-			leds[i]->B -= tempLeds[i]->B;
+            setLED(i, 'b', getLED(i, 'b') - getTempLED(i, 'b'));
 	}
 }
 
@@ -89,19 +71,19 @@ void multiplyLeds(odd_led_t* leds[NUM_LEDS], odd_led_t* tempLeds[NUM_LEDS])
 {
 	for(int i = 0; i < NUM_LEDS; i++)
 	{
-		if(leds[i]->R * tempLeds[i]->R > 4095)
-			leds[i]->R = 4095;
+		if(getLED(i, 'r') * getTempLED(i, 'r') > 4095)
+            setLED(i, 'r', 4095);
 		else
-			leds[i]->R *= tempLeds[i]->R;
+            setLED(i, 'r', getLED(i, 'r') * getTempLED(i, 'r'));
 		
-		if(leds[i]->G * tempLeds[i]->G > 4095)
-			leds[i]->G = 4095;
+		if(getLED(i, 'g') * getTempLED(i, 'g') > 4095)
+            setLED(i, 'g', 4095);
 		else
-			leds[i]->G *= tempLeds[i]->G;
+            setLED(i, 'g', getLED(i, 'g') * getTempLED(i, 'g'));
 		
-		if(leds[i]->B * tempLeds[i]->B > 4095)
-			leds[i]->B = 4095;
+		if(getLED(i, 'b') * getTempLED(i, 'b') > 4095)
+            setLED(i, 'b', 4095);
 		else
-			leds[i]->B *= tempLeds[i]->B;
+            setLED(i, 'b', getLED(i, 'b') * getTempLED(i, 'b'));
 	}
 }

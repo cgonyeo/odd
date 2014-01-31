@@ -1,8 +1,4 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include "odd_math.h"
+#include "odd.h"
 
 //Returns the odd_remainder of dividend / divisor
 double odd_remainder(double dividend, int divisor) 

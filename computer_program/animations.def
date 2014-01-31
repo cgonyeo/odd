@@ -1,0 +1,7 @@
+ANIMATION(cylonEye, 2)
+ANIMATION(strobe, 1)
+ANIMATION(setAll, 0)
+ANIMATION(smoothStrobe, 1)
+ANIMATION(sinAnimation, 2)
+ANIMATION(volumeAnimation, 0)
+ANIMATION(dammitAnimation, 0)

@@ -1,19 +1,14 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <sys/time.h>
-#include <math.h>
-#include <fftw3.h>
-#include "/usr/local/include/portaudio.h"
-#include "odd_audio.h"
-#include "odd_math.h"
+#include "odd.h"
 
-PaStream* stream;
+//Jack things
+jack_port_t *input_port;
+//jack_port_t *output_port;
+
+//FFTW things
 fftw_complex *in, *out;
 fftw_plan plan;
 
-float storage[FFT_INPUT_SIZE];
+SAMPLE storage[FFT_INPUT_SIZE];
 
 void getSoundBuffer(SAMPLE* buf)
 {
@@ -34,98 +29,42 @@ void runFFT(SAMPLE* buf)
 	//("runFFT finished\n");
 }
 
-int recordCallback( const void *inputBuffer, void *outputBuffer,
-			unsigned long framesPerBuffer, 
-			const PaStreamCallbackTimeInfo* timeInfo,
-			PaStreamCallbackFlags statusFlags,
-			void *userData )
+int counter = 0;
+
+int processAudio(jack_nframes_t nframes, void *arg)
 {
-	const SAMPLE *input = (const SAMPLE*)inputBuffer;
-	(void)outputBuffer;
-	(void)timeInfo;
-	(void)statusFlags;
-	(void)userData;
+    //jack_default_audio_sample_t *out = (jack_default_audio_sample_t *) jack_port_get_buffer (output_port, nframes);
+    jack_default_audio_sample_t *in = (jack_default_audio_sample_t *) jack_port_get_buffer (input_port, nframes);
 
-	for(int i = 0; i < FFT_INPUT_SIZE; i++)
-		storage[i] = storage[i + framesPerBuffer];
-	for(int i = 0; i < framesPerBuffer; i++)
-		storage[FFT_INPUT_SIZE - framesPerBuffer + i] = input[i];
+    //memcpy (out, in, sizeof (jack_default_audio_sample_t) * nframes);
 
-	//for(int i = 0; i < FFT_INPUT_SIZE - framesPerBuffer; i++)
-	//{
-	//	in[FFT_INPUT_SIZE - i - 1][0] = in[FFT_INPUT_SIZE - framesPerBuffer - i - 1][0];
-	//}
+    for(int i = 0; i < nframes; i++)
+    {
+        storage[i] = in[i];
+    }
 
-	//for(int i = 0; i < framesPerBuffer; i++)
-	//{
-	//	in[i][0] = input[i];
-	//}
-//	printf("Callback called\n");
-	return paContinue;
+    return 0;
 }
 
-void audioInitialization(void)
+/**
+ * This is the shutdown callback for this jack application.
+ * It is called by jack if the server ever shuts down or
+ * decides to disconnect the client.
+ */
+void jack_shutdown (void *arg)
 {
+    printf("Jack has shut down\n");
+}
+
+int audioInitialization()
+{
+    //Misc things
 	plan=(void*)0;
-	PaStreamParameters inputParameters;
-	PaError err = paNoError;
-	
-	err = Pa_Initialize();
-	if(err != paNoError)
-	{
-		printf("Error calling PaInitialize\n");
-		exit(EXIT_FAILURE);
-	}
-	
-	//printf("Getting devices...\n");
-	//const PaDeviceInfo *deviceInfo;
-	//int numDevices = Pa_GetDeviceCount();
-	//for(int i = 0; i < numDevices; i++)
-	//{
-	//	deviceInfo = Pa_GetDeviceInfo(i);
-	//	//printf("Device: %s\n", deviceInfo->name);
-	//}
-
-	inputParameters.device = Pa_GetDefaultInputDevice();
-	if(inputParameters.device == paNoDevice)
-	{
-		printf("Error: no default input device\n");
-		exit(EXIT_FAILURE);
-	}
-
-	inputParameters.channelCount = 1;
-	inputParameters.sampleFormat = PA_SAMPLE_TYPE;
-	inputParameters.suggestedLatency = Pa_GetDeviceInfo(inputParameters.device)->defaultLowInputLatency;
-	inputParameters.hostApiSpecificStreamInfo = NULL;
-
-	err = Pa_OpenStream(
-		&stream,
-		&inputParameters,
-		NULL,
-		SAMPLE_RATE,
-		FRAMES_PER_BUFFER,
-		paClipOff,
-		recordCallback,
-		NULL);
-	
-	if(err != paNoError)
-	{
-		printf("Error opening stream\n%s\n", Pa_GetErrorText(err));
-		exit(EXIT_FAILURE);
-	}
-
-	err = Pa_StartStream(stream);
-	if(err != paNoError)
-	{
-		printf("Error starting stream\n");
-		exit(EXIT_FAILURE);
-	}
-
-	printf("Audio setup complete\n");
 
 	for(int i = 0; i < FFT_INPUT_SIZE; i++)
 		storage[i] = 0;
 
+    //fftw
 	printf("Beginning FFT initialization\n");
 
 	in = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * FFT_INPUT_SIZE);
@@ -138,18 +77,67 @@ void audioInitialization(void)
 
 	plan = fftw_plan_dft_1d(FFT_INPUT_SIZE, in, out, FFTW_FORWARD, FFTW_MEASURE);
 	printf("FFT initialization complete\n");
-}
 
-void audioStop(void)
-{
-	PaError err = paNoError;
-	err = Pa_CloseStream(stream);
-	if(err != paNoError)
-	{
-		printf("Error closing audio stream\n");
-		exit(EXIT_FAILURE);
-	}
-	fftw_destroy_plan(plan);
-	fftw_free(in);
-	fftw_free(out);
+
+    //jack
+	printf("Beginning jack initialization\n");
+
+    jack_client_t *client;
+    const char **ports;
+    
+    /* try to become a client of the jack server */
+    client = jack_client_open("odd", JackNullOption, NULL);
+
+    /* tell the jack server to call `processAudio()' whenever
+        there is work to be done */
+    jack_set_process_callback (client, processAudio, 0);
+
+    /* tell the jack server to call `jack_shutdown()' if
+       it ever shuts down, either entirely, or if it
+       just decides to stop calling us.  */
+
+    jack_on_shutdown (client, jack_shutdown, 0);
+
+    /* display the current sample rate.  */
+    printf ("engine sample rate: %" PRIu32 "\n",
+            jack_get_sample_rate (client));
+
+    /* create two ports */
+    input_port = jack_port_register (client, "input", JACK_DEFAULT_AUDIO_TYPE, JackPortIsInput, 0);
+    //output_port = jack_port_register (client, "output", jack_DEFAULT_AUDIO_TYPE, JackPortIsOutput, 0);
+
+    /* tell the jack server that we are ready to roll */
+    if (jack_activate (client)) {
+        fprintf (stderr, "cannot activate client");
+        return 1;
+    }
+
+    /* connect the ports. Note: you can't do this before
+        the client is activated, because we can't allow
+        connections to be made to clients that aren't
+        running. */
+    if ((ports = jack_get_ports (client, NULL, NULL, JackPortIsPhysical|JackPortIsOutput)) == NULL) {
+        fprintf(stderr, "Cannot find any physical capture ports\n");
+        return 1;
+    }
+
+    if (jack_connect (client, ports[0], jack_port_name (input_port))) {
+        fprintf (stderr, "cannot connect input ports\n");
+    }
+
+    free (ports);
+
+    //if ((ports = jack_get_ports (client, NULL, NULL, JackPortIsPhysical|JackPortIsInput)) == NULL) {
+    //    fprintf(stderr, "Cannot find any physical playback ports\n");
+    //    return 1;
+    //}
+
+    //if (jack_connect (client, jack_port_name (output_port), ports[0])) {
+    //    fprintf (stderr, "cannot connect output ports\n");
+    //}
+
+    //free(ports);
+
+	printf("jack initialization complete\n");
+    return 0;
 }
