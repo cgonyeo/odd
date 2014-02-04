@@ -25,14 +25,15 @@
 #include <sys/socket.h>
 #include <jansson.h>
 
-#define NUM_LEDS NUM_TLCS * 8
+#define NUM_LEDS (NUM_TLCS * 8)
 #define PI 3.141592653
 
 //Data Types
-typedef struct {
+typedef struct odd_led_t {
 	int R;
 	int G;
 	int B;
+    struct odd_led_t *next;
 } odd_led_t;
 
 typedef void (*animation_f)(double*, double, odd_led_t*, odd_led_t *[NUM_LEDS]);
@@ -55,6 +56,9 @@ int getLED(int i, char color);
 int getTempLED(int i, char color);
 void setLED(int i, char color, int value);
 void setTempLED(int i, char color, int value);
+void addAnimation( animation_f function, double* params, odd_led_t* color, modifier_f modifier);
+void updateAnimation( int index, double* params, odd_led_t* color);
+void removeAnimation(int index);
 
 //Networking
 void *networkListen(char *buffer);
@@ -64,15 +68,17 @@ void *handleConnection(void *num);
 typedef struct Animation {
     const char *name;
     void (*function)(double*, double, odd_led_t*, odd_led_t *[NUM_LEDS]);
+    char *paramDescriptions;
     int numParams;
+    int numColors;
 } Animation;
 
-#define ANIMATION(name, num) void name(double *params, double totalTime, odd_led_t* color, odd_led_t* tempLeds[NUM_LEDS]);
+#define ANIMATION(name, paramDescs, num1, num2) void name(double *params, double totalTime, odd_led_t* color, odd_led_t* tempLeds[NUM_LEDS]);
 #include "animations.def"
 #undef ANIMATION
 
 //Animation Modifier Functions
-void invertTempLeds(odd_led_t* leds[NUM_LEDS], odd_led_t* tempLeds[NUM_LEDS]);
+void invertTempLeds();
 void addLeds(odd_led_t* leds[NUM_LEDS], odd_led_t* tempLeds[NUM_LEDS]);
 void subtractLeds(odd_led_t* leds[NUM_LEDS], odd_led_t* tempLeds[NUM_LEDS]);
 void inverseSubtractLeds(odd_led_t* leds[NUM_LEDS], odd_led_t* tempLeds[NUM_LEDS]);
@@ -82,15 +88,15 @@ void multiplyLeds(odd_led_t* leds[NUM_LEDS], odd_led_t* tempLeds[NUM_LEDS]);
 double odd_remainder(double dividend, int divisor);
 double odd_pow(double x, double y);
 double odd_sin(double x);
+float hann_window(int sample, int num_samples);
 double formatTime(long int seconds, long int useconds);
 
 //Audio related stuff
-#define BUFSIZE (4096)
+#define BUFSIZE (512)
 typedef float SAMPLE;
 
-#define FFT_INPUT_SIZE (4096)
-#define FFT_OUTPUT_SIZE (4096)
-#define SAMPLE_RATE (44100)
+#define FFT_INPUT_SIZE (512)
+#define FFT_OUTPUT_SIZE (512)
 
 void getSoundBuffer(SAMPLE* buf);
 void runFFT(SAMPLE* buf);

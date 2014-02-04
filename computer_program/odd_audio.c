@@ -1,5 +1,11 @@
 #include "odd.h"
 
+#if 0
+For calculating the frequencies determined by the FFTs,
+Frequency range per item = Frequency (48000) / N items (512) * 2
+ = 46.875 Hz/bin
+#endif
+
 //Jack things
 jack_port_t *input_port;
 //jack_port_t *output_port;
@@ -13,7 +19,7 @@ SAMPLE storage[FFT_INPUT_SIZE];
 void getSoundBuffer(SAMPLE* buf)
 {
 	for(int i = 0; i < FFT_OUTPUT_SIZE; i++)
-		buf[i] = storage[i];
+		buf[i] = storage[i] * hann_window(i, FFT_OUTPUT_SIZE);
 }
 
 void runFFT(SAMPLE* buf)

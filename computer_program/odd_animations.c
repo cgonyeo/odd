@@ -1,27 +1,5 @@
 #include "odd.h"
 
-//Helper method. Returns the length of the array each animation is expecting in double* params.
-//If the function is not found, returns -1
-int numParams(void (*function)(double*, double, odd_led_t*, odd_led_t *[NUM_LEDS]))
-{
-
-    if(function == cylonEye)
-        return 2;
-    if(function == strobe)
-        return 1;
-    if(function == setAll)
-        return 0;
-    if(function == smoothStrobe)
-        return 1;
-    if(function == sinAnimation)
-        return 1;
-    if(function == volumeAnimation)
-        return 0;
-    if(function == dammitAnimation)
-        return 0;
-    return -1;
-}
-
 //Animation: Lights up a clump of LEDs and then travels back and forth across the row
 //Follows a basic sin curve (moves faster in the middle, slower at the ends)
 void cylonEye(double* params, double totalTime, odd_led_t* color, odd_led_t* tempLeds[NUM_LEDS]) {
@@ -147,7 +125,7 @@ void sinAnimation(double* params, double totalTime, odd_led_t* color, odd_led_t*
     }
 }
 
-void volumeAnimation(double* params, double totalTime, odd_led_t* color, odd_led_t* tempLeds[NUM_LEDS])
+void volumeAnimation1(double* params, double totalTime, odd_led_t* color, odd_led_t* tempLeds[NUM_LEDS])
 {
     (void)params;
     (void)totalTime;
@@ -170,9 +148,160 @@ void volumeAnimation(double* params, double totalTime, odd_led_t* color, odd_led
 
     for(int i = 0; i < NUM_LEDS; i++)
     {
-        tempLeds[i]->R = color->R * avg;
-        tempLeds[i]->G = color->G * avg;
-        tempLeds[i]->B = color->B * avg;
+        setTempLED(i, 'r', color->R * avg);
+        setTempLED(i, 'g', color->G * avg);
+        setTempLED(i, 'b', color->B * avg);
+    }
+}
+
+void volumeAnimation2(double* params, double totalTime, odd_led_t* color, odd_led_t* tempLeds[NUM_LEDS])
+{
+    (void)params;
+    (void)totalTime;
+    
+    SAMPLE avg = 0;
+
+    SAMPLE soundBuffer[FFT_INPUT_SIZE];
+    getSoundBuffer(soundBuffer);
+
+    for(int i = 0; i < FFT_INPUT_SIZE; i++)
+    {
+        if(soundBuffer[i] > 0)
+            avg += soundBuffer[i];
+        else
+            avg -= soundBuffer[i];
+    }
+    avg /= FFT_INPUT_SIZE;
+    avg *= 100;
+    avg = log(avg + 1) / log(101);
+
+    for(int i = 0; i < avg * NUM_LEDS; i++)
+    {
+        setTempLED(i, 'r', color->R * avg);
+        setTempLED(i, 'g', color->G * avg);
+        setTempLED(i, 'b', color->B * avg);
+    }
+    for(int i = avg * NUM_LEDS; i < NUM_LEDS; i++)
+    {
+        setTempLED(i, 'r', 0);
+        setTempLED(i, 'g', 0);
+        setTempLED(i, 'b', 0);
+    }
+}
+
+void volumeAnimation3(double* params, double totalTime, odd_led_t* color, odd_led_t* tempLeds[NUM_LEDS])
+{
+    (void)params;
+    (void)totalTime;
+    
+    SAMPLE avg = 0;
+
+    SAMPLE soundBuffer[FFT_INPUT_SIZE];
+    getSoundBuffer(soundBuffer);
+
+    for(int i = 0; i < FFT_INPUT_SIZE; i++)
+    {
+        if(soundBuffer[i] > 0)
+            avg += soundBuffer[i];
+        else
+            avg -= soundBuffer[i];
+    }
+    avg /= FFT_INPUT_SIZE;
+    avg *= 100;
+    avg = log(avg + 1) / log(101);
+
+    int width = (int)(avg * NUM_LEDS);
+    int gap = (int)((NUM_LEDS - width) / 2);
+
+    for(int i = 0; i < NUM_LEDS; i++)
+    {
+        setTempLED(i,'r', 0);
+        setTempLED(i,'g', 0);
+        setTempLED(i,'b', 0);
+    }
+    for(int i = gap; i < gap+width; i++)
+    {
+        setTempLED(i,'r', color->R * avg);
+        setTempLED(i,'g', color->G * avg);
+        setTempLED(i,'b', color->B * avg);
+    }
+}
+
+void volumeAnimation4(double* params, double totalTime, odd_led_t* color, odd_led_t* tempLeds[NUM_LEDS])
+{
+    (void)params;
+    (void)totalTime;
+    
+    SAMPLE rAvg = 0;
+    SAMPLE gAvg = 0;
+    SAMPLE bAvg = 0;
+
+    SAMPLE soundBuffer[FFT_INPUT_SIZE];
+    runFFT(soundBuffer);
+
+    //If 48000Hz of sampling and 512 samples, then 46.875 Hz/bin
+    //So let's say:
+    //Lows = 0-300 Hz
+    //Mids = 300-1400 Hz
+    //Highs = 1400-5000 Hz
+    //Lows = 0-4
+    //Mids = 4-30
+    //Highs = 30-107
+
+    const int lowMax = 6;
+    const int midMax = 30;
+    const int highMax = 107;
+
+    for(int i = 0; i < lowMax; i++)
+    {
+        rAvg += soundBuffer[i];
+    }
+    for(int i = lowMax; i < midMax; i++)
+    {
+        gAvg += soundBuffer[i];
+    }
+    for(int i = midMax; i < highMax; i++)
+    {
+        bAvg += soundBuffer[i];
+    }
+    //avg *= 100;
+    //avg = log(avg + 1) / log(101);
+    rAvg /= 700;
+    while(rAvg > 1)
+        rAvg -= 1;
+    gAvg /= 700;
+    while(gAvg > 1)
+        gAvg -= 1;
+    bAvg /= 700;
+    while(bAvg > 1)
+        bAvg -= 1;
+    rAvg = logf(rAvg * 100 + 1) / logf(101);
+    gAvg = logf(gAvg * 100 + 1) / logf(101);
+    bAvg = logf(bAvg * 100 + 1) / logf(101);
+    int rWidth = (int)(rAvg * NUM_LEDS);
+    int rGap = (int)((NUM_LEDS - rWidth) / 2);
+    int gWidth = (int)(gAvg * NUM_LEDS);
+    int gGap = (int)((NUM_LEDS - gWidth) / 2);
+    int bWidth = (int)(bAvg * NUM_LEDS);
+    int bGap = (int)((NUM_LEDS - bWidth) / 2);
+
+    for(int i = 0; i < NUM_LEDS; i++)
+    {
+        setTempLED(i,'r', 0);
+        setTempLED(i,'g', 0);
+        setTempLED(i,'b', 0);
+    }
+    for(int i = rGap; i < rGap+rWidth; i++)
+    {
+        setTempLED(i,'r', 1000 * rAvg);
+    }
+    for(int i = gGap; i < gGap+gWidth; i++)
+    {
+        setTempLED(i,'g', 1000 * gAvg);
+    }
+    for(int i = bGap; i < bGap+bWidth; i++)
+    {
+        setTempLED(i,'b', 1000 * bAvg);
     }
 }
 
@@ -181,15 +310,28 @@ void dammitAnimation(double* params, double totalTime, odd_led_t* color, odd_led
     (void)params;
 
     SAMPLE soundBuffer[FFT_OUTPUT_SIZE];
+    memset(soundBuffer, 0, sizeof(*soundBuffer * FFT_OUTPUT_SIZE));
     runFFT(soundBuffer);
-    int binsPerLed = 20;
-    float ledsPerSection = NUM_LEDS / 9.0f;
 
-    float average = 0;
-    
-    for(int i = 0; i < FFT_OUTPUT_SIZE; i++)
+    float rangePerLed = logf(FFT_OUTPUT_SIZE / 2 / 16.0 + 1) / NUM_LEDS;
+
+    SAMPLE ledSums[NUM_LEDS];
+    int ledCounts[NUM_LEDS];
+
+    memset(ledSums, 0, sizeof(*ledSums * NUM_LEDS));
+    memset(ledCounts, 0, sizeof(*ledCounts) * NUM_LEDS);
+
+    for(int i = 0; i < FFT_OUTPUT_SIZE/2; i++)
     {
-        average += soundBuffer[i];
+        int location = (int)(logf(i / 16.0 + 1) / rangePerLed);
+
+        ledSums[location] += soundBuffer[i];
+        ledCounts[location]++;
     }
-    printf("%f\n", (average / FFT_OUTPUT_SIZE));
+    for(int i = 0; i < NUM_LEDS; i++)
+        ledSums[i] /= ledCounts[i];
+    for(int i = 0; i < NUM_LEDS; i++)
+    {
+        setTempLED(i, 'g', (int)(ledSums[i]));
+    }
 }

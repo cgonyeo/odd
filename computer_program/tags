@@ -1,0 +1,85 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.8	//
+ANIMATION	odd_network.c	13;"	d	file:
+ANIMATION	odd_network.c	22;"	d	file:
+ANIMATION	odd_network.c	24;"	d	file:
+ANIMATION	odd_network.c	3;"	d	file:
+BLANK	tlc5947.c	31;"	d	file:
+SCLK	tlc5947.c	29;"	d	file:
+SIN	tlc5947.c	28;"	d	file:
+XLAT	tlc5947.c	30;"	d	file:
+addAnimation	odd_driver.c	/^void addAnimation( void (*function)(double*, double, odd_led_t*, odd_led_t *[NUM_LEDS]), double* params, odd_led_t* color, void (*modifier)( odd_led_t* leds[NUM_LEDS], odd_led_t *[NUM_LEDS] ))$/;"	f
+addLeds	odd_anim_modifiers.c	/^void addLeds(odd_led_t* leds[NUM_LEDS], odd_led_t* tempLeds[NUM_LEDS])$/;"	f
+animationListLock	odd_driver.c	/^pthread_mutex_t animationListLock = PTHREAD_MUTEX_INITIALIZER;$/;"	v
+animation_list	odd_network.c	/^Animation animation_list[] = {$/;"	v
+animation_list_c	odd_network.c	/^int animation_list_c;$/;"	v
+animations	odd_driver.c	/^animation_t* animations[50]; \/\/All currently used animations.$/;"	v
+audioInitialization	odd_audio.c	/^int audioInitialization()$/;"	f
+counter	odd_audio.c	/^int counter = 0;$/;"	v
+cylonEye	odd_animations.c	/^void cylonEye(double* params, double totalTime, odd_led_t* color, odd_led_t* tempLeds[NUM_LEDS]) {$/;"	f
+dammitAnimation	odd_animations.c	/^void dammitAnimation(double* params, double totalTime, odd_led_t* color, odd_led_t* tempLeds[NUM_LEDS])$/;"	f
+delayStuff	tlc5947.c	/^void delayStuff() $/;"	f
+done	odd_driver.c	/^int done = 0;$/;"	v
+elapsedTime	odd_driver.c	/^long double totalTime, elapsedTime;$/;"	v
+formatTime	odd_math.c	/^double formatTime(long int seconds, long int useconds)$/;"	f
+getLED	odd_driver.c	/^int getLED(int i, char color)$/;"	f
+getSoundBuffer	odd_audio.c	/^void getSoundBuffer(SAMPLE* buf)$/;"	f
+getTempLED	odd_driver.c	/^int getTempLED(int i, char color)$/;"	f
+handleConnection	odd_network.c	/^void *handleConnection(void *num)$/;"	f
+hann_window	odd_math.c	/^float hann_window(int sample, int num_samples)$/;"	f
+in	odd_audio.c	/^fftw_complex *in, *out;$/;"	v
+input_port	odd_audio.c	/^jack_port_t *input_port;$/;"	v
+inverseSubtractLeds	odd_anim_modifiers.c	/^void inverseSubtractLeds(odd_led_t* leds[NUM_LEDS], odd_led_t* tempLeds[NUM_LEDS])$/;"	f
+invertTempLeds	odd_anim_modifiers.c	/^void invertTempLeds()$/;"	f
+jack_shutdown	odd_audio.c	/^void jack_shutdown (void *arg)$/;"	f
+leds	odd_driver.c	/^odd_led_t* leds[NUM_LEDS]; \/\/All the LEDs in use$/;"	v
+ledsLock	odd_driver.c	/^pthread_mutex_t ledsLock = PTHREAD_MUTEX_INITIALIZER;$/;"	v
+ledsTempLock	odd_driver.c	/^pthread_mutex_t ledsTempLock = PTHREAD_MUTEX_INITIALIZER;$/;"	v
+main	odd_driver.c	/^int main(void)$/;"	f
+multiplyLeds	odd_anim_modifiers.c	/^void multiplyLeds(odd_led_t* leds[NUM_LEDS], odd_led_t* tempLeds[NUM_LEDS])$/;"	f
+networkListen	odd_network.c	/^void *networkListen(char *buffer)$/;"	f
+numAnimations	odd_driver.c	/^int numAnimations = 0;$/;"	v
+odd_pow	odd_math.c	/^double odd_pow(double x, double y)$/;"	f
+odd_remainder	odd_math.c	/^double odd_remainder(double dividend, int divisor) $/;"	f
+odd_sin	odd_math.c	/^double odd_sin(double x)$/;"	f
+out	odd_audio.c	/^fftw_complex *in, *out;$/;"	v
+plan	odd_audio.c	/^fftw_plan plan;$/;"	v
+processAudio	odd_audio.c	/^int processAudio(jack_nframes_t nframes, void *arg)$/;"	f
+removeAnimation	odd_driver.c	/^void removeAnimation(int index)$/;"	f
+resetLeds	odd_driver.c	/^void resetLeds(void)$/;"	f
+runFFT	odd_audio.c	/^void runFFT(SAMPLE* buf)$/;"	f
+setAll	odd_animations.c	/^void setAll(double* params, double totalTime, odd_led_t* color, odd_led_t* tempLeds[NUM_LEDS])$/;"	f
+setLED	odd_driver.c	/^void setLED(int i, char color, int value)$/;"	f
+setTempLED	odd_driver.c	/^void setTempLED(int i, char color, int value)$/;"	f
+sinAnimation	odd_animations.c	/^void sinAnimation(double* params, double totalTime, odd_led_t* color, odd_led_t* tempLeds[NUM_LEDS])$/;"	f
+sleepTime	tlc5947.c	/^struct timespec* sleepTime;$/;"	v	typeref:struct:timespec
+smoothStrobe	odd_animations.c	/^void smoothStrobe(double* params, double totalTime, odd_led_t* color, odd_led_t* tempLeds[NUM_LEDS])$/;"	f
+storage	odd_audio.c	/^SAMPLE storage[FFT_INPUT_SIZE];$/;"	v
+strobe	odd_animations.c	/^void strobe(double* params, double totalTime, odd_led_t* color, odd_led_t* tempLeds[NUM_LEDS])$/;"	f
+subtractLeds	odd_anim_modifiers.c	/^void subtractLeds(odd_led_t* leds[NUM_LEDS], odd_led_t* tempLeds[NUM_LEDS])$/;"	f
+tempLeds	odd_driver.c	/^odd_led_t* tempLeds[NUM_LEDS]; \/\/Current alterations to the LEDs, used with animations$/;"	v
+timeLoops	odd_driver.c	/^int timeLoops = 0;$/;"	v
+tlc5947cleanup	tlc5947.c	/^void tlc5947cleanup(void)$/;"	f
+tlc5947init	tlc5947.c	/^void tlc5947init(void)$/;"	f
+tlcClearLeds	tlc5947.c	/^void tlcClearLeds(void)$/;"	f
+tlcDone	tlc5947.c	/^int tlcDone = 0;$/;"	v
+tlcGetLedValue	tlc5947.c	/^int tlcGetLedValue(int index)$/;"	f
+tlcPulsePin	tlc5947.c	/^void tlcPulsePin(int pin)$/;"	f
+tlcSetAllLeds	tlc5947.c	/^void tlcSetAllLeds(int value)$/;"	f
+tlcSetLed	tlc5947.c	/^void tlcSetLed(int ledIndex, int value)$/;"	f
+tlcUpdateLeds	tlc5947.c	/^void tlcUpdateLeds(void)$/;"	f
+tlcleds	tlc5947.c	/^int tlcleds[NUM_TLCS * 24];$/;"	v
+totalTime	odd_driver.c	/^long double totalTime, elapsedTime;$/;"	v
+updateAnimation	odd_driver.c	/^void updateAnimation( int index, double* params, odd_led_t* color)$/;"	f
+updateLoop	odd_driver.c	/^void *updateLoop(void *arg) {$/;"	f
+volumeAnimation1	odd_animations.c	/^void volumeAnimation1(double* params, double totalTime, odd_led_t* color, odd_led_t* tempLeds[NUM_LEDS])$/;"	f
+volumeAnimation2	odd_animations.c	/^void volumeAnimation2(double* params, double totalTime, odd_led_t* color, odd_led_t* tempLeds[NUM_LEDS])$/;"	f
+volumeAnimation3	odd_animations.c	/^void volumeAnimation3(double* params, double totalTime, odd_led_t* color, odd_led_t* tempLeds[NUM_LEDS])$/;"	f
+volumeAnimation4	odd_animations.c	/^void volumeAnimation4(double* params, double totalTime, odd_led_t* color, odd_led_t* tempLeds[NUM_LEDS])$/;"	f
+write_console	odd_driver.c	/^void write_console(void) {$/;"	f
+write_odd	odd_driver.c	/^void write_odd(void) {$/;"	f
+xlat_needed	tlc5947.c	/^int xlat_needed = 0;$/;"	v

@@ -7,6 +7,7 @@ int timeLoops = 0;
 
 pthread_mutex_t ledsLock = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t ledsTempLock = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t animationListLock = PTHREAD_MUTEX_INITIALIZER;
 
 odd_led_t* leds[NUM_LEDS]; //All the LEDs in use
 odd_led_t* tempLeds[NUM_LEDS]; //Current alterations to the LEDs, used with animations
@@ -101,38 +102,44 @@ void resetLeds(void)
 }
 
 //Adds an animation
-void addAnimation( void (*function)(double*, double, odd_led_t*, odd_led_t *[NUM_LEDS]), double* params, odd_led_t* color, void (*modifier)( odd_led_t* leds[NUM_LEDS], odd_led_t *[NUM_LEDS] ))
+void addAnimation( animation_f function, double* params, odd_led_t* color, modifier_f modifier)
 {
-	animation_t* derp;
-	if ((derp = malloc(sizeof(animation_t))) == NULL) {
+    pthread_mutex_lock(&animationListLock);
+	animation_t* newAnimation;
+	if ((newAnimation = malloc(sizeof(animation_t))) == NULL) {
 		fprintf(stderr, "Malloc failed");
 		exit(1);
 	}
-	derp->function = function;
-	derp->params = params;
-	derp->color = color;
-	derp->modifier = modifier;
-	animations[numAnimations++] = derp;
+	newAnimation->function = function;
+	newAnimation->params = params;
+	newAnimation->color = color;
+	newAnimation->modifier = modifier;
+	animations[numAnimations++] = newAnimation;
+    pthread_mutex_unlock(&animationListLock);
 }
 
 //Updates an animation
 void updateAnimation( int index, double* params, odd_led_t* color)
 {
+    pthread_mutex_lock(&animationListLock);
 	animations[index]->params = params;
 	odd_led_t *temp = animations[index]->color;
 	animations[index]->color = color;
 	free(temp);
+    pthread_mutex_unlock(&animationListLock);
 }
 
 //Removes an animation
 void removeAnimation(int index)
 {
+    pthread_mutex_lock(&animationListLock);
 	if(index > numAnimations || index < 0)
 		return;
 	for(int i = index; i < numAnimations - 1; i++)
 		animations[i] = animations[i+1];
 	animations[numAnimations - 1] = NULL;
 	numAnimations--;
+    pthread_mutex_unlock(&animationListLock);
 }
 
 //Program's update loop
@@ -193,36 +200,37 @@ int main(void)
 
 	odd_led_t* color = malloc(sizeof(odd_led_t));
 	color->R = 0;
-	color->G = 40;
+	color->G = 1000;
 	color->B = 0;
+    color->next = NULL;
 	
 	double params[2];
 	params[0] = 0.5;
 	params[1] = 15;
 
-	addAnimation(cylonEye, params, color, addLeds);
+	addAnimation(volumeAnimation4, params, color, addLeds);
 
-	odd_led_t* color2 = malloc(sizeof(odd_led_t));
-	color2->R = 0;
-	color2->G = 0;
-	color2->B = 40;
-	
-	double params2[2];
-	params2[0] = 0.45;
-	params2[1] = 15;
+	//odd_led_t* color2 = malloc(sizeof(odd_led_t));
+	//color2->R = 0;
+	//color2->G = 0;
+	//color2->B = 40;
+	//
+	//double params2[2];
+	//params2[0] = 0.45;
+	//params2[1] = 15;
 
-	addAnimation(cylonEye, params2, color2, addLeds);
+	//addAnimation(cylonEye, params2, color2, addLeds);
 
-	odd_led_t* color3 = malloc(sizeof(odd_led_t));
-	color3->R = 40;
-	color3->G = 0;
-	color3->B = 0;
-	
-	double params3[2];
-	params3[0] = 0.4;
-	params3[1] = 15;
+	//odd_led_t* color3 = malloc(sizeof(odd_led_t));
+	//color3->R = 40;
+	//color3->G = 0;
+	//color3->B = 0;
+	//
+	//double params3[2];
+	//params3[0] = 0.4;
+	//params3[1] = 15;
 
-	addAnimation(cylonEye, params3, color3, addLeds);
+	//addAnimation(cylonEye, params3, color3, addLeds);
 
 	networkListen(input);
     sleep(10000);

@@ -29,6 +29,11 @@ double odd_sin(double x)
 	return x;
 }
 
+float hann_window(int sample, int num_samples)
+{
+    return 0.5 * (1 - cos((2 * PI * sample) / (num_samples - 1)));
+}
+
 //Returns the time as a double (formatted to be smaller)
 double formatTime(long int seconds, long int useconds)
 {
