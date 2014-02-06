@@ -302,6 +302,23 @@ void *handleConnection(void *num)
             else
                 removeAnimation(num);
         }
+        //List available animations
+#if 0
+        Sample JSON:
+        {
+            "action": "ls"
+        }
+#endif
+        if(strcmp(action, "ls") == 0)
+        {
+            char *message = getAnimationsInJson();
+            if(write(conn_s, message, strlen(message)) < 0)
+            {
+                printf("Error writing\n");
+                exit(EXIT_FAILURE);
+            }
+            free(message);
+        }
 
         //Let's read in another command
         conn_status = read(conn_s, &buffer, 1023);

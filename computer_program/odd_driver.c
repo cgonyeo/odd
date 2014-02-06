@@ -1,5 +1,18 @@
 #include "odd.h"
 
+#define ANIMATION(animationName, params, num1, num2) {\
+    .name=#animationName,\
+    .function=animationName,\
+    .paramDescriptions=#params,\
+    .numParams=num1,\
+    .numColors=num2\
+},
+Animation animation_list2[] = {
+#include "animations.def"
+};
+#undef ANIMATION
+int animation_list_c2 = 0;
+
 long double totalTime, elapsedTime;
 int done = 0;
 int numAnimations = 0;
@@ -147,6 +160,39 @@ int getNumAnimations()
     return numAnimations;
 }
 
+//gets the current animations in json form
+char *getAnimationsInJson()
+{
+    pthread_mutex_lock(&animationListLock);
+    json_t *animArray = json_array();
+    for(int i = 0; i < numAnimations; i++)
+    {
+        json_t *animObject = json_object();
+        animation_t *anim = animations[i];
+        for(int j = 0; j < animation_list_c2; j++)
+        {
+            if(animation_list2[j].function == anim->function)
+            {
+                json_t *name = json_pack("s",animation_list2[j].name);
+                json_object_set(animObject, "name", name);
+
+                int numParams = animation_list2[j].numParams;
+                json_t *paramsArray = json_array();
+                for(int k = 0; k < numParams; k++)
+                    json_array_append(paramsArray, json_pack("f", anim->params[k]));
+                json_object_set(animObject, "params", paramsArray);
+            }
+        }
+        json_t *modifier = json_pack("s", "add");
+        json_object_set(animObject, "modifier", modifier);
+        json_array_append(animArray, animObject);
+    }
+    pthread_mutex_unlock(&animationListLock);
+    char *returnValue = json_dumps(animArray, 0);
+    json_decref(animArray);
+    return returnValue;
+}
+
 //Program's update loop
 void *updateLoop(void *arg) {
 	(void)arg;
@@ -185,6 +231,11 @@ void *updateLoop(void *arg) {
 
 int main(void)
 {
+    animation_list_c2 = 0;
+    #define ANIMATION(a, b, c, d) animation_list_c2++;
+    #include "animations.def"
+    #undef ANIMATION
+
 	for(int i = 0; i < NUM_LEDS; i++)
 	{
 		leds[i] = malloc(sizeof(odd_led_t));

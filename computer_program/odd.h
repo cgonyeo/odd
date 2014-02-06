@@ -60,6 +60,7 @@ void addAnimation( animation_f function, double* params, odd_led_t* color, modif
 void updateAnimation( int index, double* params, odd_led_t* color);
 void removeAnimation(int index);
 int getNumAnimations();
+char *getAnimationsInJson();
 
 //Networking
 void *networkListen(char *buffer);
