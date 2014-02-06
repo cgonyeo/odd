@@ -59,6 +59,7 @@ void setTempLED(int i, char color, int value);
 void addAnimation( animation_f function, double* params, odd_led_t* color, modifier_f modifier);
 void updateAnimation( int index, double* params, odd_led_t* color);
 void removeAnimation(int index);
+int getNumAnimations();
 
 //Networking
 void *networkListen(char *buffer);

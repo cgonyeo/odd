@@ -142,6 +142,11 @@ void removeAnimation(int index)
     pthread_mutex_unlock(&animationListLock);
 }
 
+int getNumAnimations()
+{
+    return numAnimations;
+}
+
 //Program's update loop
 void *updateLoop(void *arg) {
 	(void)arg;
@@ -198,17 +203,17 @@ int main(void)
 	char input[255];
 	input[0] = '\0';
 
-	odd_led_t* color = malloc(sizeof(odd_led_t));
-	color->R = 0;
-	color->G = 1000;
-	color->B = 0;
-    color->next = NULL;
-	
-	double params[2];
-	params[0] = 0.5;
-	params[1] = 15;
+	//odd_led_t* color = malloc(sizeof(odd_led_t));
+	//color->R = 0;
+	//color->G = 1000;
+	//color->B = 0;
+    //color->next = NULL;
+	//
+	//double params[2];
+	//params[0] = 0.5;
+	//params[1] = 15;
 
-	addAnimation(volumeAnimation4, params, color, addLeds);
+	//addAnimation(volumeAnimation4, params, color, addLeds);
 
 	//odd_led_t* color2 = malloc(sizeof(odd_led_t));
 	//color2->R = 0;

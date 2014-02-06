@@ -248,7 +248,7 @@ void volumeAnimation4(double* params, double totalTime, odd_led_t* color, odd_le
     //Mids = 4-30
     //Highs = 30-107
 
-    const int lowMax = 6;
+    const int lowMax = 4;
     const int midMax = 30;
     const int highMax = 107;
 
@@ -266,24 +266,30 @@ void volumeAnimation4(double* params, double totalTime, odd_led_t* color, odd_le
     }
     //avg *= 100;
     //avg = log(avg + 1) / log(101);
-    rAvg /= 700;
+    rAvg /= 800;
     while(rAvg > 1)
+    {
+        printf("rfuck\n");
         rAvg -= 1;
-    gAvg /= 700;
+    }
+    gAvg /= 800;
     while(gAvg > 1)
+    {
+        printf("gfuck\n");
         gAvg -= 1;
-    bAvg /= 700;
+    }
+    bAvg /= 800;
     while(bAvg > 1)
+    {
+        printf("bfuck\n");
         bAvg -= 1;
-    rAvg = logf(rAvg * 100 + 1) / logf(101);
-    gAvg = logf(gAvg * 100 + 1) / logf(101);
-    bAvg = logf(bAvg * 100 + 1) / logf(101);
-    int rWidth = (int)(rAvg * NUM_LEDS);
-    int rGap = (int)((NUM_LEDS - rWidth) / 2);
-    int gWidth = (int)(gAvg * NUM_LEDS);
-    int gGap = (int)((NUM_LEDS - gWidth) / 2);
-    int bWidth = (int)(bAvg * NUM_LEDS);
-    int bGap = (int)((NUM_LEDS - bWidth) / 2);
+    }
+    rAvg = logf(rAvg * 10 + 1) / logf(11);
+    gAvg = logf(gAvg * 10 + 1) / logf(11);
+    bAvg = logf(bAvg * 10 + 1) / logf(11);
+    int rWidth = (int)(rAvg * NUM_LEDS / 3);
+    int gWidth = (int)(gAvg * NUM_LEDS / 3);
+    int bWidth = (int)(bAvg * NUM_LEDS / 3);
 
     for(int i = 0; i < NUM_LEDS; i++)
     {
@@ -291,18 +297,18 @@ void volumeAnimation4(double* params, double totalTime, odd_led_t* color, odd_le
         setTempLED(i,'g', 0);
         setTempLED(i,'b', 0);
     }
-    for(int i = rGap; i < rGap+rWidth; i++)
+    for(int i = 0; i < rWidth; i++)
     {
         setTempLED(i,'r', 1000 * rAvg);
     }
-    for(int i = gGap; i < gGap+gWidth; i++)
+    for(int i = NUM_LEDS / 3; i < NUM_LEDS / 3 + gWidth; i++)
     {
         setTempLED(i,'g', 1000 * gAvg);
     }
-    for(int i = bGap; i < bGap+bWidth; i++)
-    {
-        setTempLED(i,'b', 1000 * bAvg);
-    }
+    //for(int i = NUM_LEDS * 2 / 3; i < NUM_LEDS * 2 / 3 + bWidth; i++)
+    //{
+    //    setTempLED(i,'b', 1000 * bAvg);
+    //}
 }
 
 void dammitAnimation(double* params, double totalTime, odd_led_t* color, odd_led_t* tempLeds[NUM_LEDS])

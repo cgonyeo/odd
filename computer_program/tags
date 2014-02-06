@@ -4,15 +4,15 @@
 !_TAG_PROGRAM_NAME	Exuberant Ctags	//
 !_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
 !_TAG_PROGRAM_VERSION	5.8	//
+ANIMATION	odd_network.c	106;"	d	file:
+ANIMATION	odd_network.c	108;"	d	file:
 ANIMATION	odd_network.c	13;"	d	file:
-ANIMATION	odd_network.c	22;"	d	file:
-ANIMATION	odd_network.c	24;"	d	file:
 ANIMATION	odd_network.c	3;"	d	file:
 BLANK	tlc5947.c	31;"	d	file:
 SCLK	tlc5947.c	29;"	d	file:
 SIN	tlc5947.c	28;"	d	file:
 XLAT	tlc5947.c	30;"	d	file:
-addAnimation	odd_driver.c	/^void addAnimation( void (*function)(double*, double, odd_led_t*, odd_led_t *[NUM_LEDS]), double* params, odd_led_t* color, void (*modifier)( odd_led_t* leds[NUM_LEDS], odd_led_t *[NUM_LEDS] ))$/;"	f
+addAnimation	odd_driver.c	/^void addAnimation( animation_f function, double* params, odd_led_t* color, modifier_f modifier)$/;"	f
 addLeds	odd_anim_modifiers.c	/^void addLeds(odd_led_t* leds[NUM_LEDS], odd_led_t* tempLeds[NUM_LEDS])$/;"	f
 animationListLock	odd_driver.c	/^pthread_mutex_t animationListLock = PTHREAD_MUTEX_INITIALIZER;$/;"	v
 animation_list	odd_network.c	/^Animation animation_list[] = {$/;"	v
@@ -47,6 +47,8 @@ odd_pow	odd_math.c	/^double odd_pow(double x, double y)$/;"	f
 odd_remainder	odd_math.c	/^double odd_remainder(double dividend, int divisor) $/;"	f
 odd_sin	odd_math.c	/^double odd_sin(double x)$/;"	f
 out	odd_audio.c	/^fftw_complex *in, *out;$/;"	v
+parseJsonArrayToColor	odd_network.c	/^odd_led_t *parseJsonArrayToColor(json_t *colorJsonArray)$/;"	f
+parseJsonArrayToParams	odd_network.c	/^double *parseJsonArrayToParams(json_t *paramsJson)$/;"	f
 plan	odd_audio.c	/^fftw_plan plan;$/;"	v
 processAudio	odd_audio.c	/^int processAudio(jack_nframes_t nframes, void *arg)$/;"	f
 removeAnimation	odd_driver.c	/^void removeAnimation(int index)$/;"	f
