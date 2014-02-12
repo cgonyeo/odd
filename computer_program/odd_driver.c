@@ -1,11 +1,12 @@
 #include "odd.h"
 
-#define ANIMATION(animationName, params, num1, num2) {\
+#define ANIMATION(func, animationName, params, num1, num2, num3) {\
     .name=#animationName,\
-    .function=animationName,\
+    .function=func,\
     .paramDescriptions=#params,\
     .numParams=num1,\
-    .numColors=num2\
+    .numColors=num2,\
+    .storageSize=num3\
 },
 Animation animation_list2[] = {
 #include "animations.def"
@@ -24,7 +25,7 @@ pthread_mutex_t animationListLock = PTHREAD_MUTEX_INITIALIZER;
 
 odd_led_t* leds[NUM_LEDS]; //All the LEDs in use
 odd_led_t* tempLeds[NUM_LEDS]; //Current alterations to the LEDs, used with animations
-animation_t* animations[50]; //All currently used animations.
+animation_t* animations = NULL; //All currently used animations.
 
 //Returns the value of the color of led i in a thread-safe manner
 int getLED(int i, char color)
@@ -84,50 +85,70 @@ void setTempLED(int i, char color, int value)
 
 //Writes the led array to the console
 void write_console(void) {
-	printf("\n");
-	for(int i=0; i<NUM_LEDS; i++) {
-		printf("%d, ", getLED(i, 'g'));
-		fflush(NULL);
-	}
+    printf("\n");
+    for(int i=0; i<NUM_LEDS; i++) {
+        printf("%d, ", getLED(i, 'g'));
+        fflush(NULL);
+    }
 }
 
 //Sends the new LED values to the hardware
 void write_odd(void) {
-	for(int j = 0; j < NUM_TLCS; j++)
-		for(int i = 0; i < 8; i++)
-		{
-			tlcSetLed(j * 24 + i*3,   getLED(j * 8 + i, 'r'));
-			tlcSetLed(j * 24 + i*3+1, getLED(j * 8 + i, 'g'));
-			tlcSetLed(j * 24 + i*3+2, getLED(j * 8 + i, 'b'));
-		}
-	tlcUpdateLeds();
+    for(int j = 0; j < NUM_TLCS; j++)
+        for(int i = 0; i < 8; i++)
+        {
+            tlcSetLed(j * 24 + i*3,   getLED(j * 8 + i, 'r'));
+            tlcSetLed(j * 24 + i*3+1, getLED(j * 8 + i, 'g'));
+            tlcSetLed(j * 24 + i*3+2, getLED(j * 8 + i, 'b'));
+        }
+    tlcUpdateLeds();
 }
 
 //Resets all LEDs to 0
 void resetLeds(void)
 {
-	for(int i = 0; i < NUM_LEDS; i++)
-	{
+    for(int i = 0; i < NUM_LEDS; i++)
+    {
         setLED(i, 'r', 0);
         setLED(i, 'g', 0);
         setLED(i, 'b', 0);
-	}
+    }
 }
 
 //Adds an animation
 void addAnimation( animation_f function, double* params, odd_led_t* color, modifier_f modifier)
 {
     pthread_mutex_lock(&animationListLock);
-	animation_t* newAnimation;
-	if ((newAnimation = malloc(sizeof(animation_t))) == NULL) {
-		fprintf(stderr, "Malloc failed");
-		exit(1);
-	}
-	newAnimation->function = function;
-	newAnimation->params = params;
-	newAnimation->color = color;
-	newAnimation->modifier = modifier;
-	animations[numAnimations++] = newAnimation;
+    animation_t* newAnimation;
+    if ((newAnimation = malloc(sizeof(animation_t))) == NULL) {
+        fprintf(stderr, "Malloc failed");
+        exit(1);
+    }
+    newAnimation->function = function;
+    newAnimation->params = params;
+    newAnimation->color = color;
+    newAnimation->modifier = modifier;
+    newAnimation->next = NULL;
+
+    for(int i = 0; i < animation_list_c2; i++)
+    {
+        if(animation_list2[i].function == function)
+        {
+            int size = sizeof(double) * animation_list2[i].storageSize;
+            newAnimation->storage = malloc(size);
+            memset(newAnimation->storage, 0, size);
+        }
+    }
+
+    if(numAnimations == 0)
+        animations = newAnimation;
+    else {
+        animation_t *temp = animations;
+        while(temp->next != NULL)
+            temp = temp->next;
+        temp->next = newAnimation;
+    }
+    numAnimations++;
     pthread_mutex_unlock(&animationListLock);
 }
 
@@ -135,10 +156,16 @@ void addAnimation( animation_f function, double* params, odd_led_t* color, modif
 void updateAnimation( int index, double* params, odd_led_t* color)
 {
     pthread_mutex_lock(&animationListLock);
-	animations[index]->params = params;
-	odd_led_t *temp = animations[index]->color;
-	animations[index]->color = color;
-	free(temp);
+    int counter = 0;
+    animation_t *temp = animations;
+    while(counter < index) {
+        temp = temp->next;
+        counter++;
+    }
+    temp->params = params;
+    odd_led_t *tempColor = temp->color;
+    temp->color = color;
+    free(tempColor);
     pthread_mutex_unlock(&animationListLock);
 }
 
@@ -146,12 +173,26 @@ void updateAnimation( int index, double* params, odd_led_t* color)
 void removeAnimation(int index)
 {
     pthread_mutex_lock(&animationListLock);
-	if(index > numAnimations || index < 0)
-		return;
-	for(int i = index; i < numAnimations - 1; i++)
-		animations[i] = animations[i+1];
-	animations[numAnimations - 1] = NULL;
-	numAnimations--;
+    if(index >= numAnimations || index < 0)
+    {
+        pthread_mutex_unlock(&animationListLock);
+        return;
+    }
+    if(index == 0)
+        animations = animations->next;
+    else
+    {
+        int i = 0;
+        animation_t *temp = animations;
+        while(i < index - 1)
+        {
+            temp = temp->next;
+            i++;
+        }
+        //TODO: Free the animation properly
+        temp->next = temp->next->next;
+    }
+    numAnimations--;
     pthread_mutex_unlock(&animationListLock);
 }
 
@@ -165,10 +206,11 @@ char *getAnimationsInJson()
 {
     pthread_mutex_lock(&animationListLock);
     json_t *animArray = json_array();
+    printf("Current animation count: %d\n", numAnimations);
+    animation_t *anim = animations;
     for(int i = 0; i < numAnimations; i++)
     {
         json_t *animObject = json_object();
-        animation_t *anim = animations[i];
         for(int j = 0; j < animation_list_c2; j++)
         {
             if(animation_list2[j].function == anim->function)
@@ -181,11 +223,28 @@ char *getAnimationsInJson()
                 for(int k = 0; k < numParams; k++)
                     json_array_append(paramsArray, json_pack("f", anim->params[k]));
                 json_object_set(animObject, "params", paramsArray);
+
             }
         }
+
+        json_t *colorArray = json_array();
+        odd_led_t *colorTemp = anim->color;
+        while(colorTemp != NULL)
+        {
+            json_t *colorJsonObject = json_object();
+            json_object_set(colorJsonObject, "r", json_pack("i", colorTemp->R));
+            json_object_set(colorJsonObject, "g", json_pack("i", colorTemp->G));
+            json_object_set(colorJsonObject, "b", json_pack("i", colorTemp->B));
+            json_array_append(colorArray, colorJsonObject);
+            colorTemp = colorTemp->next;
+        }
+        json_object_set(animObject, "colors", colorArray);
+
         json_t *modifier = json_pack("s", "add");
         json_object_set(animObject, "modifier", modifier);
         json_array_append(animArray, animObject);
+
+        anim = anim->next;
     }
     pthread_mutex_unlock(&animationListLock);
     char *returnValue = json_dumps(animArray, 0);
@@ -195,114 +254,146 @@ char *getAnimationsInJson()
 
 //Program's update loop
 void *updateLoop(void *arg) {
-	(void)arg;
-	int failed = 0;
-	
-	elapsedTime = 0;
-	totalTime = 0;
-	struct timeval start, current, previous;
-	gettimeofday(&start, NULL);
-	gettimeofday(&previous, NULL);
+    (void)arg;
+    int failed = 0;
+    
+    elapsedTime = 0;
+    totalTime = 0;
+    struct timeval start, current, previous;
+    gettimeofday(&start, NULL);
+    gettimeofday(&previous, NULL);
 
-	while(!done)
-	{
-		resetLeds();
-		previous = current;
-		gettimeofday(&current, NULL);
-		elapsedTime =  formatTime(current.tv_sec, current.tv_usec) - formatTime(previous.tv_sec, previous.tv_usec);
-		totalTime = formatTime(current.tv_sec, current.tv_usec);// - formatTime(start.tv_sec, start.tv_usec);
+    while(!done)
+    {
+        resetLeds();
+        previous = current;
+        gettimeofday(&current, NULL);
+        elapsedTime =  formatTime(current.tv_sec, current.tv_usec) - formatTime(previous.tv_sec, previous.tv_usec);
+        totalTime = formatTime(current.tv_sec, current.tv_usec);// - formatTime(start.tv_sec, start.tv_usec);
 
-		for(int i = 0; i < numAnimations; i++)
-		{
-			animations[i]->function(animations[i]->params, totalTime, animations[i]->color, tempLeds);
-			animations[i]->modifier(leds, tempLeds);
-		}
-				
-		if(failed==0)
-			write_odd();
+        animation_t *anim = animations;
+        for(int i = 0; i < numAnimations; i++)
+        {
+            anim->function(anim->params, totalTime, anim->color, anim->storage);
+            anim->modifier(leds, tempLeds);
 
-		usleep(500);
-	}
-	resetLeds();
-	if(failed==0)
-		write_odd();
-	return NULL;
+            anim = anim->next;
+        }
+                
+        if(failed==0)
+            write_odd();
+
+        //write_console();
+        usleep(5000);
+    }
+    resetLeds();
+    if(failed==0)
+        write_odd();
+    return NULL;
 }
+
+static void *none(void *arg) {
+    return NULL;
+}
+
+void thread_test() {
+    pthread_t thd[1000];
+    pthread_attr_t attrs;
+    pthread_attr_init(&attrs);
+    //pthread_attr_setdetachstate(&attrs, PTHREAD_CREATE_DETACHED);
+    int i = 0;
+    while (pthread_create(thd+i, &attrs, none, NULL) == 0) i++;
+    printf("I can run %d threads\n", i);
+    pthread_attr_destroy(&attrs);
+    for (int j = 0; j < i; j++) pthread_join(thd[j], NULL);
+}
+
 
 int main(void)
 {
+
     animation_list_c2 = 0;
-    #define ANIMATION(a, b, c, d) animation_list_c2++;
+    #define ANIMATION(a, b, c, d, e, f) animation_list_c2++;
     #include "animations.def"
     #undef ANIMATION
 
-	for(int i = 0; i < NUM_LEDS; i++)
-	{
-		leds[i] = malloc(sizeof(odd_led_t));
-		tempLeds[i] = malloc(sizeof(odd_led_t));
-	}
+    for(int i = 0; i < NUM_LEDS; i++)
+    {
+        leds[i] = malloc(sizeof(odd_led_t));
+        tempLeds[i] = malloc(sizeof(odd_led_t));
+    }
 
-	tlc5947init();
+    tlc5947init();
+
     audioInitialization();
+    thread_test();
+    //Start the thread that updates our LEDs
+    pthread_t ul;
+    pthread_create(&ul,NULL,updateLoop,"randomargs");
 
-	//Start the thread that updates our LEDs
-	pthread_t ul;
-	pthread_create(&ul,NULL,updateLoop,"randomargs");
+    printf("ODD started.\n");
+    
+    odd_led_t* color = malloc(sizeof(odd_led_t));
+    color->R = 0;
+    color->G = 4095;
+    color->B = 0;
+    color->next = NULL;
+    
+    double params[2];
+    params[0] = 5;
+    params[1] = 20;
 
-	printf("ODD started.\n");
-	
-	char input[255];
-	input[0] = '\0';
+    addAnimation(gameOfLife, params, color, addLeds);
 
-	//odd_led_t* color = malloc(sizeof(odd_led_t));
-	//color->R = 0;
-	//color->G = 1000;
-	//color->B = 0;
-    //color->next = NULL;
-	//
-	//double params[2];
-	//params[0] = 0.5;
-	//params[1] = 15;
+    //odd_led_t* color2 = malloc(sizeof(odd_led_t));
+    //color2->R = 0;
+    //color2->G = 0;
+    //color2->B = 4095;
+    //
+    //double params2[2];
+    //params2[0] = 0.45;
+    //params2[1] = 24;
 
-	//addAnimation(volumeAnimation4, params, color, addLeds);
+    //addAnimation(cylonEye, params2, color2, addLeds);
 
-	//odd_led_t* color2 = malloc(sizeof(odd_led_t));
-	//color2->R = 0;
-	//color2->G = 0;
-	//color2->B = 40;
-	//
-	//double params2[2];
-	//params2[0] = 0.45;
-	//params2[1] = 15;
+    //odd_led_t* color3 = malloc(sizeof(odd_led_t));
+    //color3->R = 4095;
+    //color3->G = 0;
+    //color3->B = 0;
+    //
+    //double params3[2];
+    //params3[0] = 0.4;
+    //params3[1] = 24;
 
-	//addAnimation(cylonEye, params2, color2, addLeds);
+    //addAnimation(cylonEye, params3, color3, addLeds);
 
-	//odd_led_t* color3 = malloc(sizeof(odd_led_t));
-	//color3->R = 40;
-	//color3->G = 0;
-	//color3->B = 0;
-	//
-	//double params3[2];
-	//params3[0] = 0.4;
-	//params3[1] = 15;
+    //odd_led_t* color4 = malloc(sizeof(odd_led_t));
+    //color4->R = 4095;
+    //color4->G = 4095;
+    //color4->B = 4095;
+    //
+    //double params4[2];
+    //params4[0] = 30;
+    //params4[1] = 24;
 
-	//addAnimation(cylonEye, params3, color3, addLeds);
+    //addAnimation(strobe, params4, color4, subtractLeds);
 
-	networkListen(input);
-    sleep(10000);
-	printf("Exiting...\n");
-	done = 1;
-	pthread_join(ul, NULL);
-	tlc5947cleanup();
-	for(int i = 0; i < numAnimations; i++)
-	{
-		//free(animations[numAnimations]->color);
-		free(animations[numAnimations]);
-	}
-	for(int i = 0; i < NUM_LEDS; i++)
-	{
-		free(leds[i]);
-		free(tempLeds[i]);
-	}
+    networkListen();
+    printf("Exiting...\n");
+    done = 1;
+    pthread_join(ul, NULL);
+    tlc5947cleanup();
+    for(int i = 0; i < numAnimations; i++)
+    {
+        //free(animations[numAnimations]->color);
+        animation_t *temp = animations;
+        animations = animations->next;
+        free(temp);
+    }
+    //for(int i = 0; i < NUM_LEDS; i++)
+    //{
+    //    free(leds[i]);
+    //    free(tempLeds[i]);
+    //}
 }
 

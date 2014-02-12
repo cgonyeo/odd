@@ -74,7 +74,6 @@ void tlcPulsePin(int pin)
 {
     digitalWrite(pin, 1);
     delayStuff();
-    //nanosleep(sleepTime, NULL);
     digitalWrite(pin, 0);
 }
 

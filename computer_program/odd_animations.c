@@ -2,7 +2,7 @@
 
 //Animation: Lights up a clump of LEDs and then travels back and forth across the row
 //Follows a basic sin curve (moves faster in the middle, slower at the ends)
-void cylonEye(double* params, double totalTime, odd_led_t* color, odd_led_t* tempLeds[NUM_LEDS]) {
+void cylonEye(double *params, double totalTime, odd_led_t *color, double *storage) {
     double speed = params[0];
     double radius = params[1];
 
@@ -42,20 +42,44 @@ void cylonEye(double* params, double totalTime, odd_led_t* color, odd_led_t* tem
         ledDistances[i] -= numLeds - radius;
         ledDistances[i] *= 1 / radius;
     }
-    //If an LED has a positive brightness, set it.
-    for(int i = 0; i < NUM_LEDS; i++)
+    odd_led_t *color2 = color->next;
+    if(color2 == NULL)
     {
-        if(ledDistances[i] > 0)
+        //If an LED has a positive brightness, set it.
+        for(int i = 0; i < NUM_LEDS; i++)
         {
-            setTempLED(i, 'r', color->R * ledDistances[i]);
-            setTempLED(i, 'g', color->G * ledDistances[i]);
-            setTempLED(i, 'b', color->B * ledDistances[i]);
+            if(ledDistances[i] > 0)
+            {
+                setTempLED(i, 'r', color->R * ledDistances[i]);
+                setTempLED(i, 'g', color->G * ledDistances[i]);
+                setTempLED(i, 'b', color->B * ledDistances[i]);
+            }
+        }
+    }
+    else
+    {
+        //If an LED has a positive brightness, set it.
+        for(int i = 0; i < NUM_LEDS; i++)
+        {
+            if(ledDistances[i] > 0)
+            {
+                double colorDistance = pow(ledDistances[i], 1);
+                odd_led_t colorTemp;
+                colorTemp.R = color->R * colorDistance + color2->R * (0.1 / colorDistance);
+                colorTemp.G = color->G * colorDistance + color2->G * (0.1 / colorDistance);
+                colorTemp.B = color->B * colorDistance + color2->B * (0.1 / colorDistance);
+
+                double colorStrength = (16/3) * (pow(((1.0 - ledDistances[i]) * 2) + 2, -2) - (1.0 / 15.5));
+                setTempLED(i, 'r', colorTemp.R * colorStrength);
+                setTempLED(i, 'g', colorTemp.G * colorStrength);
+                setTempLED(i, 'b', colorTemp.B * colorStrength);
+            }
         }
     }
 }
 
 //Animation: Turns the LEDs off and on and off and on and off and on and off...
-void strobe(double* params, double totalTime, odd_led_t* color, odd_led_t* tempLeds[NUM_LEDS])
+void strobe(double *params, double totalTime, odd_led_t *color, double *storage)
 {
     double speed = params[0];
     double time = totalTime * speed;
@@ -71,7 +95,7 @@ void strobe(double* params, double totalTime, odd_led_t* color, odd_led_t* tempL
 }
 
 //Animation: Sets all LEDs to color
-void setAll(double* params, double totalTime, odd_led_t* color, odd_led_t* tempLeds[NUM_LEDS])
+void setAll(double *params, double totalTime, odd_led_t *color, double *storage)
 {
     (void)params;
     for(int i = 0; i < NUM_LEDS; i++)
@@ -83,7 +107,7 @@ void setAll(double* params, double totalTime, odd_led_t* color, odd_led_t* tempL
 }
 
 //Animation: Like strobe but fades LEDs in and out and pauses when they're off.
-void smoothStrobe(double* params, double totalTime, odd_led_t* color, odd_led_t* tempLeds[NUM_LEDS])
+void smoothStrobe(double *params, double totalTime, odd_led_t *color, double *storage)
 {
     double speed = params[0];
 
@@ -106,7 +130,7 @@ void smoothStrobe(double* params, double totalTime, odd_led_t* color, odd_led_t*
 }
 
 //Animation that makes the brightness of the LEDs follow a sin curve
-void sinAnimation(double* params, double totalTime, odd_led_t* color, odd_led_t* tempLeds[NUM_LEDS])
+void sinAnimation(double *params, double totalTime, odd_led_t *color, double *storage)
 {
     double speed = params[0];
 
@@ -125,7 +149,79 @@ void sinAnimation(double* params, double totalTime, odd_led_t* color, odd_led_t*
     }
 }
 
-void volumeAnimation1(double* params, double totalTime, odd_led_t* color, odd_led_t* tempLeds[NUM_LEDS])
+//A given led's neighbors are comprised of the three leds to the left and right
+//4, 5 or 6 neighbors = dead due to overpopulation
+//2 or 3 neighbors = lives
+//0 or 1 neighbors = dead due to underpopulation
+void calculateNextStepOfGame(double *in, double *out)
+{    
+    int range = 3; 
+    for(int i = 0; i < NUM_LEDS; i++)
+    {
+        int neighborCount = 0;
+        for(int j = i - range; j <= i + range; j++)
+        {
+            if(j == i)
+                continue;
+            int index = j;
+            if(index < 0)
+                index += NUM_LEDS;
+            if(index > NUM_LEDS)
+                index -= NUM_LEDS;
+            neighborCount += in[index];
+        }
+       * (out + i) = neighborCount == 2 || neighborCount == 3 || neighborCount == 4;
+    }
+}
+
+void printBoard(double *board)
+{
+    printf("game: ");
+    for(int i = 0; i < NUM_LEDS; i++)
+        printf("%d ", (int)board[i]);
+    printf("\n");
+}
+
+void gameOfLife(double *params, double totalTime, odd_led_t *color, double *storage)
+{
+    int counterIndex = NUM_LEDS*2;
+
+    double speed = *params;
+
+    if(storage[counterIndex] == 0)
+    {
+        //First run, let's initialize some stuff
+        *(storage + counterIndex) = totalTime + 1 / speed;
+        int seed = (int)(params[1]) % NUM_LEDS;
+        for(int i = 0; i < NUM_LEDS; i++)
+        {
+            *(storage + i) = (seed & i) != 0;
+        }
+        //printBoard(storage);
+        calculateNextStepOfGame(storage, storage+NUM_LEDS);
+        //printBoard(storage+NUM_LEDS);
+    }
+
+    if(totalTime > storage[counterIndex])
+    {
+        *(storage + counterIndex) = totalTime + 1 / speed;
+        memcpy(storage, storage + NUM_LEDS, sizeof(double) * NUM_LEDS);
+        calculateNextStepOfGame(storage, storage + NUM_LEDS);
+        //printBoard(storage+NUM_LEDS);
+    }
+
+    double progress = 1 - (storage[counterIndex] - totalTime) / (1 / speed);
+
+    for(int i = 0; i < NUM_LEDS; i++)
+    {
+        double strength = storage[i] * progress + storage[i + NUM_LEDS] * (1 - progress);
+        setTempLED(i, 'r', color->R * strength);
+        setTempLED(i, 'g', color->G * strength);
+        setTempLED(i, 'b', color->B * strength);
+    }
+}
+
+void volumeAnimation1(double *params, double totalTime, odd_led_t *color, double *storage)
 {
     (void)params;
     (void)totalTime;
@@ -154,7 +250,7 @@ void volumeAnimation1(double* params, double totalTime, odd_led_t* color, odd_le
     }
 }
 
-void volumeAnimation2(double* params, double totalTime, odd_led_t* color, odd_led_t* tempLeds[NUM_LEDS])
+void volumeAnimation2(double *params, double totalTime, odd_led_t *color, double *storage)
 {
     (void)params;
     (void)totalTime;
@@ -189,7 +285,7 @@ void volumeAnimation2(double* params, double totalTime, odd_led_t* color, odd_le
     }
 }
 
-void volumeAnimation3(double* params, double totalTime, odd_led_t* color, odd_led_t* tempLeds[NUM_LEDS])
+void volumeAnimation3(double *params, double totalTime, odd_led_t *color, double *storage)
 {
     (void)params;
     (void)totalTime;
@@ -227,7 +323,7 @@ void volumeAnimation3(double* params, double totalTime, odd_led_t* color, odd_le
     }
 }
 
-void volumeAnimation4(double* params, double totalTime, odd_led_t* color, odd_led_t* tempLeds[NUM_LEDS])
+void volumeAnimation4(double *params, double totalTime, odd_led_t *color, double *storage)
 {
     (void)params;
     (void)totalTime;
@@ -289,7 +385,6 @@ void volumeAnimation4(double* params, double totalTime, odd_led_t* color, odd_le
     bAvg = logf(bAvg * 10 + 1) / logf(11);
     int rWidth = (int)(rAvg * NUM_LEDS / 3);
     int gWidth = (int)(gAvg * NUM_LEDS / 3);
-    int bWidth = (int)(bAvg * NUM_LEDS / 3);
 
     for(int i = 0; i < NUM_LEDS; i++)
     {
@@ -311,7 +406,7 @@ void volumeAnimation4(double* params, double totalTime, odd_led_t* color, odd_le
     //}
 }
 
-void dammitAnimation(double* params, double totalTime, odd_led_t* color, odd_led_t* tempLeds[NUM_LEDS])
+void dammitAnimation(double *params, double totalTime, odd_led_t *color, double *storage)
 {
     (void)params;
 

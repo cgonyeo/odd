@@ -36,15 +36,16 @@ typedef struct odd_led_t {
     struct odd_led_t *next;
 } odd_led_t;
 
-typedef void (*animation_f)(double*, double, odd_led_t*, odd_led_t *[NUM_LEDS]);
+typedef void (*animation_f)(double*, double, odd_led_t*, double *);
 typedef void (*modifier_f)( odd_led_t *[NUM_LEDS], odd_led_t *[NUM_LEDS] );
 
 typedef struct animation_type {
-	animation_f function;
-	modifier_f modifier;
-	double* params;
-	odd_led_t* color;
-    struct animation_type *next;
+	animation_f function;   //The function to call
+	modifier_f modifier;    //The modifier to be used
+	double* params;         //The params to be used
+	odd_led_t* color;       //The color(s) the animation will be
+    struct animation_type *next; //The next animation in the list
+    double *storage;        //The pointer to the beginning of the storage for this animation
 } animation_t;
 
 //Driver Stuff
@@ -62,29 +63,32 @@ void removeAnimation(int index);
 int getNumAnimations();
 char *getAnimationsInJson();
 
+void thread_test();
+
 //Networking
-void *networkListen(char *buffer);
+void *networkListen();
 void *handleConnection(void *num);
 
 //Animation Functions
 typedef struct Animation {
     const char *name;
-    void (*function)(double*, double, odd_led_t*, odd_led_t *[NUM_LEDS]);
+    animation_f function;
     char *paramDescriptions;
     int numParams;
     int numColors;
+    int storageSize;
 } Animation;
 
-#define ANIMATION(name, paramDescs, num1, num2) void name(double *params, double totalTime, odd_led_t* color, odd_led_t* tempLeds[NUM_LEDS]);
+#define ANIMATION(func, name, paramDescs, num1, num2, num3)\
+    void func(double *params, double totalTime, odd_led_t* color, double *storage);
 #include "animations.def"
 #undef ANIMATION
 
 //Animation Modifier Functions
 void invertTempLeds();
-void addLeds(odd_led_t* leds[NUM_LEDS], odd_led_t* tempLeds[NUM_LEDS]);
-void subtractLeds(odd_led_t* leds[NUM_LEDS], odd_led_t* tempLeds[NUM_LEDS]);
-void inverseSubtractLeds(odd_led_t* leds[NUM_LEDS], odd_led_t* tempLeds[NUM_LEDS]);
-void multiplyLeds(odd_led_t* leds[NUM_LEDS], odd_led_t* tempLeds[NUM_LEDS]);
+#define MODIFIER(func, name) void func(odd_led_t* leds[NUM_LEDS], odd_led_t* tempLeds[NUM_LEDS]);
+#include "modifiers.def"
+#undef MODIFIER
 
 //Math Functions. No, I didn't need to write some of these. Shut up.
 double odd_remainder(double dividend, int divisor);

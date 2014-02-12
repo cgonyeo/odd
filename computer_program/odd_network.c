@@ -1,11 +1,12 @@
 #include "odd.h"
 
-#define ANIMATION(animationName, params, num1, num2) {\
+#define ANIMATION(func, animationName, params, num1, num2, num3) {\
     .name=#animationName,\
-    .function=animationName,\
+    .function=func,\
     .paramDescriptions=#params,\
     .numParams=num1,\
-    .numColors=num2\
+    .numColors=num2,\
+    .storageSize=num3\
 },
 Animation animation_list[] = {
 #include "animations.def"
@@ -99,11 +100,12 @@ double *parseJsonArrayToParams(json_t *paramsJson)
         return NULL;
 }
 
-void *networkListen(char *buffer)
+void *networkListen()
 {
+    thread_test();
 
 animation_list_c = 0;
-#define ANIMATION(a, b, c, d) animation_list_c++;
+#define ANIMATION(a, b, c, d, e, f) animation_list_c++;
 #include "animations.def"
 #undef ANIMATION
 
@@ -143,48 +145,54 @@ animation_list_c = 0;
         printf("Error calling listen\n");
         exit(EXIT_FAILURE);
     }
+    int counter = 0;
     while(1)
     {
         printf("Accepting on socket\n");
         if((conn_s = accept(list_s, NULL, NULL)) < 0)
         {
-            printf("Error calling accept\n");
+            perror("accept");
             exit(EXIT_FAILURE);
         }
-        printf("New connection\n");
+        printf("New connection: %d\n", counter++);
 
         pthread_t handler;
         int *num = malloc(sizeof(int));
-        memcpy(num, &conn_s, sizeof(int));
+        *num = conn_s;
         int err = pthread_create(&handler,NULL,handleConnection,num);
         if(err != 0) 
-               perror("pthread_create");
+        {
+            perror("pthread_create");
+            exit(EXIT_FAILURE);
+        }
     }
 }
 
 void *handleConnection(void *num)
 {
-    printf("Handling new connection\n");
-    char buffer[1024];
+    pthread_detach(pthread_self());
+    printf("Handling new connection with thread %lu\n", pthread_self());
+    char *buffer = malloc(sizeof(char) * 1024);
     int conn_s = *((int *)num);
     free(num);
-    int conn_status = read(conn_s, &buffer, 1023);
+    int conn_status = read(conn_s, buffer, 1023);
     json_t *root;
     json_error_t jsonError;
     char *errorCode = malloc(sizeof(char) * 64);
     if(conn_status <= 0)
         perror("Connection");
     buffer[conn_status] = '\0';
+    
     while(conn_status > 0)
     {
-        printf("Received %d: %s\n", conn_status, buffer);
+        printf("Received %d: '%s'\n", conn_status, buffer);
         //Load the json
-        root = json_loads(&(buffer[0]), 0, &jsonError);
+        root = json_loads(buffer, 0, &jsonError);
         //Check for errors reading the json
         if(!root)
         {
             fprintf(stderr, "error: on line %d: %s\n", jsonError.line, jsonError.text);
-            continue;
+            break;
         }
         //Check that we have a json object, and not an array or some shit
         if(!json_is_object(root)) {
@@ -294,15 +302,15 @@ void *handleConnection(void *num)
             int num = json_integer_value(numJson);
             if(num == -1)
             {
-                for(int i = 0; i < getNumAnimations(); i++)
+                for(int i = getNumAnimations() - 1; i >= 0; i--)
                 {
-                    removeAnimation(0);
+                    removeAnimation(i);
                 }
             }
             else
                 removeAnimation(num);
         }
-        //List available animations
+        //List running animations
 #if 0
         Sample JSON:
         {
@@ -319,16 +327,49 @@ void *handleConnection(void *num)
             }
             free(message);
         }
-
-        //Let's read in another command
-        conn_status = read(conn_s, &buffer, 1023);
-        //Check for an error with the read call
-        if(conn_status <= 0)
+        //List available animations
+#if 0
+        Sample JSON:
         {
-            perror("Connection");
-            break;
+            "action": "ls animations"
         }
-        buffer[conn_status] = '\0';
+#endif
+        if(strcmp(action, "ls animations") == 0)
+        {
+            json_t *animArray = json_array();
+            for(int j = 0; j < animation_list_c; j++)
+            {
+                json_t *animObject = json_object();
+
+                json_t *name = json_pack("s",animation_list[j].name);
+                json_object_set(animObject, "name", name);
+
+                json_t *paramDescriptions = json_pack("s", animation_list[j].paramDescriptions);
+                json_object_set(animObject, "paramDescriptions", paramDescriptions);
+
+                int numParams = animation_list[j].numParams;
+                json_t *numParamsJson = json_pack("i", numParams);
+                json_object_set(animObject, "numParams", numParamsJson);
+
+                int numColors = animation_list[j].numColors;
+                json_t *numColorsJson = json_pack("i", numColors);
+                json_object_set(animObject, "numColors", numColorsJson);
+
+                json_array_append(animArray, animObject);
+            }
+            char *message = json_dumps(animArray, 0);
+            json_decref(animArray);
+
+            if(write(conn_s, message, strlen(message)) < 0)
+            {
+                printf("Error writing\n");
+                exit(EXIT_FAILURE);
+            }
+            free(message);
+        }
+
+        //And we're done with the json
+        json_decref(root);
 
         if(0)
         {
@@ -348,12 +389,25 @@ void *handleConnection(void *num)
                 json_decref(root);
         }
 
+        printf("Done handling\n");
+        //Let's read in another command
+        conn_status = read(conn_s, buffer, 1023);
+        //Check for an error with the read call
+        if(conn_status <= 0)
+        {
+            perror("Connection");
+            break;
+        }
+        buffer[conn_status] = '\0';
+
     }
-    printf("Closing connection\n");
+    
 	if(close(conn_s) < 0)
 	{
-		printf("Error closing list_s\n");
+		printf("Error closing conn_s\n");
 	}
     free(errorCode);
+    free(buffer);
+    printf("Closing connection\n");
     return NULL;
 }

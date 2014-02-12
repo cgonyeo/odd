@@ -1,0 +1,4 @@
+MODIFIER(addLeds, "add")
+MODIFIER(subtractLeds, "subtract")
+MODIFIER(inverseSubtractLeds, "inverse subtract")
+MODIFIER(multiplyLeds, "multiply")
