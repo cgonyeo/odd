@@ -7,26 +7,32 @@ Frequency range per item = Frequency (48000) / N items (512) * 2
 #endif
 
 //Jack things
-jack_port_t *input_port;
+//jack_port_t *input_port;
 //jack_port_t *output_port;
 
 //FFTW things
 fftw_complex *in, *out;
 fftw_plan plan;
 
+pthread_mutex_t storageLock = PTHREAD_MUTEX_INITIALIZER;
+
 SAMPLE storage[FFT_INPUT_SIZE];
 
 void getSoundBuffer(SAMPLE* buf)
 {
+    pthread_mutex_lock(&storageLock);
 	for(int i = 0; i < FFT_OUTPUT_SIZE; i++)
 		buf[i] = storage[i] * hann_window(i, FFT_OUTPUT_SIZE);
+    pthread_mutex_unlock(&storageLock);
 }
 
 void runFFT(SAMPLE* buf)
 {
 	//("runFFT called\n");
+    pthread_mutex_lock(&storageLock);
 	for(int i = 0; i < FFT_INPUT_SIZE; i++)
 		in[i][0] = storage[i];
+    pthread_mutex_unlock(&storageLock);
 	fftw_execute(plan);
 	for(int i = 0; i < FFT_OUTPUT_SIZE; i++)
 	{
@@ -35,21 +41,27 @@ void runFFT(SAMPLE* buf)
 	//("runFFT finished\n");
 }
 
-int counter = 0;
-
-int processAudio(jack_nframes_t nframes, void *arg)
-{
-    //jack_default_audio_sample_t *out = (jack_default_audio_sample_t *) jack_port_get_buffer (output_port, nframes);
-    jack_default_audio_sample_t *in = (jack_default_audio_sample_t *) jack_port_get_buffer (input_port, nframes);
-
-    //memcpy (out, in, sizeof (jack_default_audio_sample_t) * nframes);
-
-    for(int i = 0; i < nframes; i++)
-    {
-        storage[i] = in[i];
+/**
+ * Update loop for recording audio
+ */
+void *processAudio(void *arg) {
+    snd_pcm_t *capture_handle = (snd_pcm_t *)arg;
+    short buf[BUFSIZE];
+    int err;
+    while(1) {
+        if ((err = snd_pcm_readi (capture_handle, buf, BUFSIZE)) != BUFSIZE) {
+            fprintf (stderr, "read from audio interface failed (%s)\n", 
+            snd_strerror (err)); 
+            exit (1); 
+        } 
+        pthread_mutex_lock(&storageLock);
+        for(int i = 0; i < BUFSIZE; i++) {
+            storage[i] = (SAMPLE) buf[i] / 32768.0;
+        }
+        pthread_mutex_unlock(&storageLock);
     }
 
-    return 0;
+    snd_pcm_close (capture_handle);
 }
 
 /**
@@ -84,66 +96,74 @@ int audioInitialization()
 	plan = fftw_plan_dft_1d(FFT_INPUT_SIZE, in, out, FFTW_FORWARD, FFTW_MEASURE);
 	printf("FFT initialization complete\n");
 
+    //alsa
+    printf("Beginning alsa initialization\n");
+    int err;
+    char *device = "hw:1,0";
+    unsigned int rate = 48000;
+    snd_pcm_t *capture_handle;
+    snd_pcm_hw_params_t *hw_params;
 
-    //jack
-	printf("Beginning jack initialization\n");
-
-    jack_client_t *client;
-    const char **ports;
-    
-    /* try to become a client of the jack server */
-    client = jack_client_open("odd", JackNullOption, NULL);
-
-    /* tell the jack server to call `processAudio()' whenever
-        there is work to be done */
-    jack_set_process_callback (client, processAudio, 0);
-
-    /* tell the jack server to call `jack_shutdown()' if
-       it ever shuts down, either entirely, or if it
-       just decides to stop calling us.  */
-
-    jack_on_shutdown (client, jack_shutdown, 0);
-
-    /* display the current sample rate.  */
-    printf ("engine sample rate: %" PRIu32 "\n",
-            jack_get_sample_rate (client));
-
-    /* create two ports */
-    input_port = jack_port_register (client, "input", JACK_DEFAULT_AUDIO_TYPE, JackPortIsInput, 0);
-    //output_port = jack_port_register (client, "output", jack_DEFAULT_AUDIO_TYPE, JackPortIsOutput, 0);
-
-    /* tell the jack server that we are ready to roll */
-    if (jack_activate (client)) {
-        fprintf (stderr, "cannot activate client");
-        return 1;
+    if ((err = snd_pcm_open (&capture_handle, device, SND_PCM_STREAM_CAPTURE, 0)) < 0) {
+        fprintf (stderr, "cannot open audio device %s (%s)\n",
+        device,
+        snd_strerror (err));
+        exit (1);
     }
-
-    /* connect the ports. Note: you can't do this before
-        the client is activated, because we can't allow
-        connections to be made to clients that aren't
-        running. */
-    if ((ports = jack_get_ports (client, NULL, NULL, JackPortIsPhysical|JackPortIsOutput)) == NULL) {
-        fprintf(stderr, "Cannot find any physical capture ports\n");
-        return 1;
+     
+    if ((err = snd_pcm_hw_params_malloc (&hw_params)) < 0) {
+        fprintf (stderr, "cannot allocate hardware parameter structure (%s)\n",
+        snd_strerror (err));
+        exit (1);
     }
-
-    if (jack_connect (client, ports[0], jack_port_name (input_port))) {
-        fprintf (stderr, "cannot connect input ports\n");
+     
+    if ((err = snd_pcm_hw_params_any (capture_handle, hw_params)) < 0) {
+        fprintf (stderr, "cannot initialize hardware parameter structure (%s)\n",
+        snd_strerror (err));
+        exit (1);
     }
+    if ((err = snd_pcm_hw_params_set_access (capture_handle, hw_params, SND_PCM_ACCESS_RW_INTERLEAVED)) < 0) {
+        fprintf (stderr, "cannot set access type (%s)\n", 
+        snd_strerror (err)); 
+        exit (1); 
+    } 
 
-    free (ports);
+    if ((err = snd_pcm_hw_params_set_format (capture_handle, hw_params, SND_PCM_FORMAT_S16_LE)) < 0) {
+        fprintf (stderr, "cannot set sample format (%s)\n", 
+        snd_strerror (err)); 
+        exit (1); 
+    } 
 
-    //if ((ports = jack_get_ports (client, NULL, NULL, JackPortIsPhysical|JackPortIsInput)) == NULL) {
-    //    fprintf(stderr, "Cannot find any physical playback ports\n");
-    //    return 1;
-    //}
+    if ((err = snd_pcm_hw_params_set_rate_near (capture_handle, hw_params, &rate, 0)) < 0) {
+        fprintf (stderr, "cannot set sample rate (%s)\n", 
+        snd_strerror (err)); 
+        exit (1); 
+    } 
 
-    //if (jack_connect (client, jack_port_name (output_port), ports[0])) {
-    //    fprintf (stderr, "cannot connect output ports\n");
-    //}
+    if ((err = snd_pcm_hw_params_set_channels (capture_handle, hw_params, 1)) < 0) {
+        fprintf (stderr, "cannot set channel count (%s)\n", 
+        snd_strerror (err)); 
+        exit (1); 
+    } 
 
-    //free(ports);
+    if ((err = snd_pcm_hw_params (capture_handle, hw_params)) < 0) {
+        fprintf (stderr, "cannot set parameters (%s)\n",
+        snd_strerror (err)); 
+        exit (1); 
+    } 
 
-	printf("jack initialization complete\n");
+    snd_pcm_hw_params_free (hw_params);
+
+    if ((err = snd_pcm_prepare (capture_handle)) < 0) {
+        fprintf (stderr, "cannot prepare audio interface for use (%s)\n", 
+        snd_strerror (err)); 
+        exit (1); 
+    } 
+
+    pthread_t al;
+    pthread_create(&al,NULL,processAudio,capture_handle);
+
+    printf("alsa initialization complete\n");
+
     return 0;
 }

@@ -14,7 +14,8 @@
 //hardware
 #include "tlc5947.h"
 //audio
-#include <jack/jack.h>
+//#include <jack/jack.h>
+#include <alsa/asoundlib.h>
 #include <fftw3.h>
 //threads
 #include <pthread.h>
@@ -98,11 +99,11 @@ float hann_window(int sample, int num_samples);
 double formatTime(long int seconds, long int useconds);
 
 //Audio related stuff
-#define BUFSIZE (512)
+#define BUFSIZE (1024)
 typedef float SAMPLE;
 
-#define FFT_INPUT_SIZE (512)
-#define FFT_OUTPUT_SIZE (512)
+#define FFT_INPUT_SIZE (1024)
+#define FFT_OUTPUT_SIZE (1024)
 
 void getSoundBuffer(SAMPLE* buf);
 void runFFT(SAMPLE* buf);

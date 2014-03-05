@@ -10,4 +10,5 @@ void tlcPulsePin(int pin);
 void tlc5947init(void);
 void tlc5947cleanup(void);
 void tlcUpdateLeds(void);
+void tlcUpdateLedsSpi(void);
 #endif

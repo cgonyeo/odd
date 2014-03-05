@@ -1,7 +1,7 @@
 CFLAGS := -Wall -std=gnu99 -ggdb 
-LDFLAGS := -lm -lpthread -ljack -lwiringPi -lfftw3 -ljansson
+LDFLAGS := -lm -lpthread -lwiringPi -lfftw3 -ljansson -lasound
 
-SRCS := $(wildcard *.c)
+SRCS := $(wildcard *.c) $(wildcard animations/*.c)
 HDRS := $(wildcard *.h)
 OBJS := $(patsubst %.c,%.o,$(SRCS))
 
@@ -12,4 +12,4 @@ odd: ${OBJS} ${HDRS}
 	gcc $(CFLAGS) -c $< -o $@
 
 clean:
-	rm odd *.o
+	rm odd *.o animations/*.o

@@ -274,14 +274,18 @@ void *handleConnection(void *num)
             printf("Colors: r%d g%d b%d\n", color->R, color->G, color->B);
 
             //Add the animation
+            int added = 0;
             for(int i = 0; i < animation_list_c; i++)
             {
                 if(strcmp(name, animation_list[i].name) == 0)
                 {
                     printf("Adding animation for playback\n");
                     addAnimation(animation_list[i].function, params, color, addLeds);
+                    added = 1;
                 }
             }
+            if(!added)
+                printf("Invalid animation\n");
         }
         //Remove a animation
         //Animation number of -1 means remove all

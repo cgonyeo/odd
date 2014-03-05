@@ -189,7 +189,10 @@ void removeAnimation(int index)
             temp = temp->next;
             i++;
         }
-        //TODO: Free the animation properly
+        free(temp->next->params);
+        free(temp->next->storage);
+        free(temp->next->color);
+        free(temp->next);
         temp->next = temp->next->next;
     }
     numAnimations--;
@@ -256,6 +259,7 @@ char *getAnimationsInJson()
 void *updateLoop(void *arg) {
     (void)arg;
     int failed = 0;
+    srand(time(NULL));
     
     elapsedTime = 0;
     totalTime = 0;
@@ -284,7 +288,7 @@ void *updateLoop(void *arg) {
             write_odd();
 
         //write_console();
-        usleep(5000);
+        usleep(500);
     }
     resetLeds();
     if(failed==0)
@@ -333,17 +337,17 @@ int main(void)
 
     printf("ODD started.\n");
     
-    odd_led_t* color = malloc(sizeof(odd_led_t));
-    color->R = 0;
-    color->G = 4095;
-    color->B = 0;
-    color->next = NULL;
-    
-    double params[2];
-    params[0] = 5;
-    params[1] = 20;
+    //odd_led_t* color = malloc(sizeof(odd_led_t));
+    //color->R = 0;
+    //color->G = 4095;
+    //color->B = 0;
+    //color->next = NULL;
+    //
+    //double params[2];
+    //params[0] = 5;
+    //params[1] = 20;
 
-    addAnimation(gameOfLife, params, color, addLeds);
+    //addAnimation(gameOfLife, params, color, addLeds);
 
     //odd_led_t* color2 = malloc(sizeof(odd_led_t));
     //color2->R = 0;
