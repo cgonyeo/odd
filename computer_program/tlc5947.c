@@ -153,7 +153,7 @@ void tlcUpdateLeds(void)
 
     write(spiFile, bits, sizeof(byte) * NUM_TLCS * 36);
 
-    digitalWrite(BLANK, 1);
+    //digitalWrite(BLANK, 1);
     tlcPulsePin(XLAT);
-    digitalWrite(BLANK, 0);
+    //digitalWrite(BLANK, 0);
 }

@@ -21,24 +21,24 @@ SAMPLE storage[FFT_INPUT_SIZE];
 void getSoundBuffer(SAMPLE* buf)
 {
     pthread_mutex_lock(&storageLock);
-	for(int i = 0; i < FFT_OUTPUT_SIZE; i++)
-		buf[i] = storage[i] * hann_window(i, FFT_OUTPUT_SIZE);
+    for(int i = 0; i < FFT_OUTPUT_SIZE; i++)
+        buf[i] = storage[i] * hann_window(i, FFT_OUTPUT_SIZE);
     pthread_mutex_unlock(&storageLock);
 }
 
 void runFFT(SAMPLE* buf)
 {
-	//("runFFT called\n");
+    //("runFFT called\n");
     pthread_mutex_lock(&storageLock);
-	for(int i = 0; i < FFT_INPUT_SIZE; i++)
-		in[i][0] = storage[i];
+    for(int i = 0; i < FFT_INPUT_SIZE; i++)
+        in[i][0] = storage[i];
     pthread_mutex_unlock(&storageLock);
-	fftw_execute(plan);
-	for(int i = 0; i < FFT_OUTPUT_SIZE; i++)
-	{
-		buf[i] = sqrt(out[i][0] * out[i][0] + out[i][1] * out[i][1]);
-	}
-	//("runFFT finished\n");
+    fftw_execute(plan);
+    for(int i = 0; i < FFT_OUTPUT_SIZE; i++)
+    {
+        buf[i] = sqrt(out[i][0] * out[i][0] + out[i][1] * out[i][1]);
+    }
+    //("runFFT finished\n");
 }
 
 /**
@@ -64,37 +64,27 @@ void *processAudio(void *arg) {
     snd_pcm_close (capture_handle);
 }
 
-/**
- * This is the shutdown callback for this jack application.
- * It is called by jack if the server ever shuts down or
- * decides to disconnect the client.
- */
-void jack_shutdown (void *arg)
-{
-    printf("Jack has shut down\n");
-}
-
 int audioInitialization()
 {
     //Misc things
-	plan=(void*)0;
+    plan=(void*)0;
 
-	for(int i = 0; i < FFT_INPUT_SIZE; i++)
-		storage[i] = 0;
+    for(int i = 0; i < FFT_INPUT_SIZE; i++)
+        storage[i] = 0;
 
     //fftw
-	printf("Beginning FFT initialization\n");
+    printf("Beginning FFT initialization\n");
 
-	in = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * FFT_INPUT_SIZE);
-	out = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * FFT_INPUT_SIZE);
-	for(int i = 0; i < FFT_INPUT_SIZE; i++)
-	{
-		in[i][0] = 0;
-		in[i][1] = 0;
-	}
+    in = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * FFT_INPUT_SIZE);
+    out = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * FFT_INPUT_SIZE);
+    for(int i = 0; i < FFT_INPUT_SIZE; i++)
+    {
+        in[i][0] = 0;
+        in[i][1] = 0;
+    }
 
-	plan = fftw_plan_dft_1d(FFT_INPUT_SIZE, in, out, FFTW_FORWARD, FFTW_MEASURE);
-	printf("FFT initialization complete\n");
+    plan = fftw_plan_dft_1d(FFT_INPUT_SIZE, in, out, FFTW_FORWARD, FFTW_MEASURE);
+    printf("FFT initialization complete\n");
 
     //alsa
     printf("Beginning alsa initialization\n");

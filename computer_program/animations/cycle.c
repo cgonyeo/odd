@@ -5,7 +5,7 @@
 void cycle(double *params, double totalTime, odd_led_t *color, double *storage) {
     double speed = params[0];
     double radius = params[1];
-    double num = params[1];
+    double num = params[2];
 
     //scale the time by our speed to alter the rate of tf the animation
     double time = totalTime * speed;
@@ -24,24 +24,30 @@ void cycle(double *params, double totalTime, odd_led_t *color, double *storage) 
 
     //Calculate the center
     center = odd_remainder(time, 1);
+    if(center < 0) center += 1;
     center *= numLeds;
     
     for(int x = 0; x < num; x++)
     {
-        int tempcenter = center + (x * 1.0 / num) * NUM_LEDS % NUM_LEDS;
+        double tempcenter = center + (x * 1.0 / num) * NUM_LEDS;
+        if(tempcenter > NUM_LEDS) tempcenter -= NUM_LEDS;
 
         //Calculate the distance of each LED from the center
         //and do some math to figure out each LED's brightness from 0-1
         double ledDistances[NUM_LEDS];
         for(int i = 0; i < NUM_LEDS; i++) ledDistances[i] = 0;
-        for(int i = tempcenter - radius, i <= tempcenter + radius, i++)
+        for(int i = tempcenter - radius; i <= tempcenter + radius; i++)
         {
+            int index = i;
+            if(index >= NUM_LEDS) index -= NUM_LEDS;
+            if(index < 0) index += NUM_LEDS;
+
             if(tempcenter - i > 0)
-                ledDistances[i%NUM_LEDS] = tempcenter - i;
+                ledDistances[index] = tempcenter - i;
             else
-                ledDistances[i%NUM_LEDS] = i - tempcenter;
-            ledDistances[i%NUM_LEDS] = 
-                    (radius - ledDistances[i%NUM_LEDS]) / radius;
+                ledDistances[index] = i - tempcenter;
+            ledDistances[index] = 
+                    (radius - ledDistances[index]) / radius;
         }
 
         odd_led_t *color2 = color->next;

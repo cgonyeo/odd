@@ -32,14 +32,14 @@ void cylonEye(double *params, double totalTime, odd_led_t *color, double *storag
     //Calculate the distance of each LED from the center, and do some math to figure out each LED's brightness
     double ledDistances[NUM_LEDS];
     for(int i = 0; i < NUM_LEDS; i++) ledDistances[i] = 0;
-    for(int i = tempcenter - radius, i <= tempcenter + radius, i++)
+    for(int i = center - radius; i <= center + radius; i++)
     {
         if(i > 0 && i < NUM_LEDS)
         {
-            if(tempcenter - i > 0)
-                ledDistances[i] = tempcenter - i;
+            if(center - i > 0)
+                ledDistances[i] = center - i;
             else
-                ledDistances[i] = i - tempcenter;
+                ledDistances[i] = i - center;
             ledDistances[i] = 
                     (radius - ledDistances[i]) / radius;
         }
@@ -62,21 +62,20 @@ void cylonEye(double *params, double totalTime, odd_led_t *color, double *storag
     {
         for(int i = 0; i < NUM_LEDS; i++)
         {
-            double colorDistance = pow(ledDistances[i], 1);
-            odd_led_t colorTemp;
-            colorTemp.R = color->R * colorDistance + 
-                          color2->R * (0.1 / colorDistance);
-            colorTemp.G = color->G * colorDistance + 
-                          color2->G * (0.1 / colorDistance);
-            colorTemp.B = color->B * colorDistance + 
-                          color2->B * (0.1 / colorDistance);
+            if(ledDistances[i] != 0)
+            {
+                double colorDistance = ledDistances[i];
+                odd_led_t colorTemp;
+                colorTemp.R = color->R * colorDistance + 
+                              color2->R * (1 / colorDistance);
+                colorTemp.G = color->G * colorDistance + 
+                              color2->G * (1 / colorDistance);
+                colorTemp.B = color->B * colorDistance + 
+                              color2->B * (1 / colorDistance);
 
-            //I have no clue how the fuck I came up 
-            //with the following number
-            double colorStrength = (16/3) * (pow(((1.0 - ledDistances[i]) * 2) + 2, -2) - (1.0 / 15.5));
-            setTempLED(i, 'r', colorTemp.R * colorStrength);
-            setTempLED(i, 'g', colorTemp.G * colorStrength);
-            setTempLED(i, 'b', colorTemp.B * colorStrength);
+                setTempLED(i, 'r', colorTemp.R * pow(colorDistance, 4));
+                setTempLED(i, 'g', colorTemp.G * pow(colorDistance, 4));
+                setTempLED(i, 'b', colorTemp.B * pow(colorDistance, 4));
             }
         }
     }
