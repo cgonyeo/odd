@@ -1,6 +1,8 @@
 //animation name, param descriptors, num params, num colors, storage space
 ANIMATION(cylonEye, Cylon Eye, speed+radius, 2, 1, 0)
 ANIMATION(cycle, Cycle, speed+radius+num, 3, 1, 0)
+ANIMATION(wave, Wave, frequency+strength+speed, 3, 1, 0)
+ANIMATION(rain, Rain, frequency+strength+speed, 3, 1, 0)
 ANIMATION(strobe, Strobe, speed, 1, 1, 0)
 ANIMATION(setAll, Set All, , 0, 1, 0)
 ANIMATION(smoothStrobe, Pulse, speed, 1, 1, 0)

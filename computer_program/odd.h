@@ -92,7 +92,6 @@ void invertTempLeds();
 #undef MODIFIER
 
 //Math Functions. No, I didn't need to write some of these. Shut up.
-double odd_remainder(double dividend, int divisor);
 double odd_pow(double x, double y);
 double odd_sin(double x);
 float hann_window(int sample, int num_samples);

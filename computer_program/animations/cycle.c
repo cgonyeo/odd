@@ -23,7 +23,7 @@ void cycle(double *params, double totalTime, odd_led_t *color, double *storage) 
     }
 
     //Calculate the center
-    center = odd_remainder(time, 1);
+    center = fmod(time, 1);
     if(center < 0) center += 1;
     center *= numLeds;
     

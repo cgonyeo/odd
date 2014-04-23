@@ -87,7 +87,7 @@ void setTempLED(int i, char color, int value)
 void write_console(void) {
     printf("\n");
     for(int i=0; i<NUM_LEDS; i++) {
-        printf("%d, ", getLED(i, 'g'));
+        printf("%d, ", getLED(i, 'r'));
         fflush(NULL);
     }
 }
@@ -272,7 +272,6 @@ void *updateLoop(void *arg) {
         resetLeds();
         previous = current;
         gettimeofday(&current, NULL);
-        elapsedTime =  formatTime(current.tv_sec, current.tv_usec) - formatTime(previous.tv_sec, previous.tv_usec);
         totalTime = formatTime(current.tv_sec, current.tv_usec);// - formatTime(start.tv_sec, start.tv_usec);
 
         animation_t *anim = animations;

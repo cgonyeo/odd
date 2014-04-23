@@ -22,9 +22,9 @@ void cylonEye(double *params, double totalTime, odd_led_t *color, double *storag
     
     //Calculate the center
     if((int)time % 2 == 1)
-        center = odd_remainder(time, 1);
+        center = fmod(time, 1);
     else
-        center = 1 - odd_remainder(time, 1);
+        center = 1 - fmod(time, 1);
     center = odd_sin(center);
     center *= numLeds;
     

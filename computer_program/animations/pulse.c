@@ -8,9 +8,9 @@ void smoothStrobe(double *params, double totalTime, odd_led_t *color, double *st
     double time = totalTime * speed;
     double power = 0;
     if((int)time % 2 == 1)
-        power = odd_remainder(time, 1);
+        power = fmod(time, 1);
     else
-        power = 1 - odd_remainder(time, 1);
+        power = 1 - fmod(time, 1);
     power = odd_pow(power, 2);
     power *= 1.5;
     power -= 0.5;
